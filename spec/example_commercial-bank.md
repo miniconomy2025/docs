@@ -1,3 +1,6 @@
+# ERD
+[Link to ERD](https://dbdiagram.io)
+
 # Responsibilities
 <!-- What specific roles does this group serve in the miniconomy -->
 - Provide a service that allows companies to take out a loan
