@@ -48,6 +48,8 @@
       "thoh", "recycler"
     ];
 
+    const baseUrl = `${location.origin}${location.pathname.replace(/\/[^\/]*$/, "/")}`;
+
     const buttonsContainer = document.getElementById("project-buttons");
     const swaggerContainer = document.getElementById("swagger-ui");
     const markdownContainer = document.getElementById("markdown-doc");
@@ -74,7 +76,7 @@
       }
 
       // Try loading markdown
-      const mdUrl = `docs/apis/${selectedProject}/api.md`;
+      const mdUrl = `${baseUrl}apis/${selectedProject}/api.md`;
       fetch(mdUrl)
         .then(res => {
           if (!res.ok) throw new Error("No markdown found");
@@ -93,19 +95,21 @@
       btn.textContent = project;
       btn.setAttribute("data-project", project);
       btn.onclick = () => {
-        history.pushState(null, "", `/${project}`);
-        loadSwaggerUI(`docs/apis/${project}/api.yaml`, project);
+        const newUrl = new URL(window.location);
+        newUrl.searchParams.set("page", project);
+        history.pushState(null, "", newUrl);
+        loadSwaggerUI(`${baseUrl}apis/${project}/api.yaml`, project);
       };
       buttonsContainer.appendChild(btn);
     });
 
-    // Extract ?page=... from query string
+    // Extract ?p=... from query string
     const params = new URLSearchParams(window.location.search);
-    const pageParam = params.get("page");
+    const pageParam = params.get("p");
     const defaultProject = projects.includes(pageParam) ? pageParam : projects[0];
 
     // Load spec + markdown
-    loadSwaggerUI(`docs/apis/${defaultProject}/api.yaml`, defaultProject);
+    loadSwaggerUI(`${baseUrl}apis/${defaultProject}/api.yaml`, defaultProject);
   </script>
 
 </body>
