@@ -1,0 +1,159 @@
+openapi: 3.0.0
+info:
+  title: Banking API for Economic Simulator
+  version: 1.0.0
+  description: >
+    API for simulating banking operations in a mini economy.
+    Includes loan issuance, receiving deposits, and account transfers.
+ 
+paths:
+  /loan:
+    post:
+      summary: Issue a loan to an account
+      description: >
+        Issues a loan from the commercial bank to a retail bank or company account. 
+        Enforces reserve rate and returns interest details.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                recipientAccountId:
+                  type: string
+                  description: The account ID to receive the loan
+                amount:
+                  type: number
+                  description: The requested loan amount
+                termMonths:
+                  type: integer
+                  description: Optional loan term in months
+ 
+              required:
+                - recipientAccountId
+                - amount
+      responses:
+        '200':
+          description: Loan issued successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  recipientAccountId:
+                    type: string
+                  loanAmount:
+                    type: number
+                  interestRate:
+                    type: number
+                  totalRepayable:
+                    type: number
+                  loanIssuedAt:
+                    type: string
+                    format: date-time
+        '400':
+          description: Loan denied due to reserve rule violation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Reserve requirement violated or insufficient liquidity
+ 
+  /receive:
+    post:
+      summary: Receive a deposit into the Commercial Bank
+      description: >
+        Deposits money into a Commercial Bank account (e.g. THoH investment or company funding).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                recipientAccountId:
+                  type: string
+                  description: The account ID to receive the deposit
+                amount:
+                  type: number
+                  description: The deposit amount
+              required:
+                - recipientAccountId
+                - amount
+      responses:
+        '200':
+          description: Deposit successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  recipientAccountId:
+                    type: string
+                  depositedAmount:
+                    type: number
+                  depositedAt:
+                    type: string
+                    format: date-time
+ 
+  /transfer:
+    post:
+      summary: Transfer money between accounts
+      description: >
+        Transfers funds between two accounts. A 2% fee is charged. Retail Bank transfers must
+        maintain a 20% reserve requirement.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                fromAccountId:
+                  type: string
+                  description: Source account ID
+                toAccountId:
+                  type: string
+                  description: Destination account ID
+                amount:
+                  type: number
+                  description: Amount to transfer (before fee)
+              required:
+                - fromAccountId
+                - toAccountId
+                - amount
+      responses:
+        '200':
+          description: Transfer successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  fromAccountId:
+                    type: string
+                  toAccountId:
+                    type: string
+                  amountTransferred:
+                    type: number
+                    description: Final amount delivered after fee
+                  feeCharged:
+                    type: number
+                    description: 2% fee amount
+                  transferredAt:
+                    type: string
+                    format: date-time
+        '400':
+          description: Transfer denied due to insufficient funds or reserve rule violation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Reserve requirement violated or insufficient funds

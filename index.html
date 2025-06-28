@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Multi-Project API Docs</title>
+  <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist/swagger-ui.css" />
+  <script src="https://unpkg.com/swagger-ui-dist/swagger-ui-bundle.js"></script>
+  <script src="https://unpkg.com/swagger-ui-dist/swagger-ui-standalone-preset.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <style>
+    body { font-family: sans-serif; padding: 0; margin: 0; }
+    header { padding: 0 1rem; }
+    .buttons { margin-bottom: 1rem; }
+    button {
+      margin: 0.25rem;
+      padding: 0.5rem 1rem;
+      background-color: #62a03f;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:hover { background-color: rgb(78, 129, 48); }
+    #markdown-doc { padding: 1rem; max-width: 900px; margin: auto; }
+  </style>
+</head>
+<body>
+
+  <!----- Projects Navbar ----->
+  <header>
+    <h1>Miniconomy API Docs</h1>
+    <div class="buttons" id="project-buttons"></div>
+  </header>
+
+  <!----- Markdown container ----->
+  <div id="markdown-doc"></div>
+
+  <!----- Swagger UI container ----->
+  <div id="swagger-ui"></div>
+
+  <!----- Scripts ----->
+  <script>
+    const projects = [
+      "electronics-supplier", "screen-supplier", "case-supplier",
+      "bulk-logistics", "consumer-logistics",
+      "pear-company", "sumsang-company",
+      "commercial-bank", "retail-bank",
+      "thoh", "recycler"
+    ];
+
+    const buttonsContainer = document.getElementById("project-buttons");
+    const swaggerContainer = document.getElementById("swagger-ui");
+    const markdownContainer = document.getElementById("markdown-doc");
+    let currentButton = null;
+
+    function loadSwaggerUI(specUrl, selectedProject) {
+      swaggerContainer.innerHTML = ""; // Clear Swagger UI
+      markdownContainer.innerHTML = ""; // Clear Markdown
+
+      SwaggerUIBundle({
+        url: specUrl,
+        dom_id: "#swagger-ui",
+        deepLinking: true,
+        presets: [ SwaggerUIBundle.presets.apis, SwaggerUIStandalonePreset ],
+        layout: "StandaloneLayout"
+      });
+
+      // Highlight selected button
+      if (currentButton) { currentButton.style.outline = "none"; }
+      const newButton = document.querySelector(`button[data-project="${selectedProject}"]`);
+      if (newButton) {
+        newButton.style.outline = "3px solid #222";
+        currentButton = newButton;
+      }
+
+      // Try loading markdown
+      const mdUrl = `apis/${selectedProject}/api.md`;
+      fetch(mdUrl)
+        .then(res => {
+          if (!res.ok) throw new Error("No markdown found");
+          return res.text();
+        })
+        .then(markdown => {
+          const html = marked.parse(markdown);
+          markdownContainer.innerHTML = html;
+        })
+        .catch(() => { /* ignore if no .md */ });
+    }
+
+    // Create buttons
+    projects.forEach(project => {
+      const btn = document.createElement("button");
+      btn.textContent = project;
+      btn.setAttribute("data-project", project);
+      btn.onclick = () => {
+        history.pushState(null, "", `/${project}`);
+        loadSwaggerUI(`apis/${project}/api.yaml`, project);
+      };
+      buttonsContainer.appendChild(btn);
+    });
+
+    // Get project name from URL path
+    const currentPath = window.location.pathname.replace(/^\/+|\/+$/g, "");
+    const defaultProject = projects.includes(currentPath) ? currentPath : projects[0];
+
+    // Load spec + markdown
+    loadSwaggerUI(`apis/${defaultProject}/api.yaml`, defaultProject);
+  </script>
+
+</body>
+</html>
