@@ -1,9 +1,9 @@
 # Miniconomy Docs
 
 This repository serves as a central location for all teams to manage their:
-    - high-level assumptions + design (`spec/<group-nahe>.md`)
-    - individual roles + responsibilities (`spec/<group-name>.md`)
-    - API documentation (`apis/<group-name>/api.{md,yaml}`)
+- high-level assumptions + design (`spec/<group-name>.md`)
+- individual roles + responsibilities (`spec/<group-name>.md`)
+- API documentation (`apis/<group-name>/api.{md,yaml}`)
 
 By managing things in one central location it should be easier to resolve inconsistencies and to ensure that all groups are working by the same assumptions.
 
