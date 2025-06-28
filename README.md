@@ -1,14 +1,14 @@
 # Miniconomy Docs
 
 This repository serves as a central location for all teams to manage their:
-    - high-level assumptions + design (`spec/<group name>.md`)
-    - individual roles + responsibilities (`spec/<group name>.md`)
-    - API documentation (`apis/<group name>/api.md`)
+    - high-level assumptions + design (`spec/<group-nahe>.md`)
+    - individual roles + responsibilities (`spec/<group-name>.md`)
+    - API documentation (`apis/<group-name>/api.{md,yaml}`)
 
 By managing things in one central location it should be easier to resolve inconsistencies and to ensure that all groups are working by the same assumptions.
 
 > **NOTE**: The `master` branch should only contain **definitive** and **finalized** specifications, which other groups can confidently assume to be true, and base their respective implementations off of.
-> Groups should make their own `<group name>` branches (E.g. `commercial-bank`) to incrementally work on in-progress specifications, and should only things into `master` once they are certain & consistent with the assumptions of other groups.
+> Groups should make their own `<group-name>` branches (E.g. `commercial-bank`) to incrementally work on in-progress specifications, and should only things into `master` once they are certain & consistent with the assumptions of other groups.
 
 
 ---
