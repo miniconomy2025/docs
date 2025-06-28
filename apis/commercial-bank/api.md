@@ -1,3 +1,10 @@
+# Example
+> **NOTE**: The following specification is not finalized and is currently only provided as an example structure for reference while writing your docs.
+
+> **Scroll to the very bottom for the Swagger docs example**
+
+---
+
 ## Commercial Bank API Specification
 
 ### Introduction
