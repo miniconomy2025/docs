@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Multi-Project API Docs</title>
+  <title>Miniconomy API Docs</title>
   <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist/swagger-ui.css" />
   <script src="https://unpkg.com/swagger-ui-dist/swagger-ui-bundle.js"></script>
   <script src="https://unpkg.com/swagger-ui-dist/swagger-ui-standalone-preset.js"></script>
@@ -92,11 +92,12 @@
     // Create buttons
     projects.forEach(project => {
       const btn = document.createElement("button");
+      btn.type = "button";
       btn.textContent = project;
       btn.setAttribute("data-project", project);
       btn.onclick = () => {
         const newUrl = new URL(window.location);
-        newUrl.searchParams.set("page", project);
+        newUrl.searchParams.set("p", project);
         history.pushState(null, "", newUrl);
         loadSwaggerUI(`${baseUrl}apis/${project}/api.yaml`, project);
       };
