@@ -1,18 +1,171 @@
-openapi: 3.0.0
+openapi: 3.0.3
 info:
-  title: Banking API for Economic Simulator
+  title: Simple Banking System API
   version: 1.0.0
-  description: >
-    API for simulating banking operations in a mini economy.
-    Includes loan issuance, receiving deposits, and account transfers.
- 
+  description: |
+    Commercial bank API for managing accounts, transactions, and loans.
+    All endpoints (except account creation) require an `X-API-Key` header.
+
+servers:
+  - url: https://localhost:8080
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+  schemas:
+    Transaction:
+      type: object
+      properties:
+        transaction_number:
+          type: string
+        from:
+          type: string
+        to:
+          type: string
+        amount:
+          type: number
+          format: float
+        description:
+          type: string
+        status:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+    Loan:
+      type: object
+      properties:
+        loan_number:
+          type: string
+        initial_amount:
+          type: number
+        interest_rate:
+          type: number
+        started_at:
+          type: string
+          format: date-time
+        write_off:
+          type: boolean
+        outstanding_amount:
+          type: number
+    LoanPayment:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        amount:
+          type: number
+        is_interest:
+          type: boolean
+
+security:
+  - ApiKeyAuth: []
+
 paths:
-  /loan:
+  /accounts:
     post:
-      summary: Issue a loan to an account
-      description: >
-        Issues a loan from the commercial bank to a retail bank or company account. 
-        Enforces reserve rate and returns interest details.
+      deprecated: true
+      summary: Create a new account
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Account created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  account_number:
+                    type: string
+                  api_key:
+                    type: string
+
+  /accounts/me:
+    get:
+      summary: Get your account number
+      security:
+        - ApiKeyAuth: []
+      responses:
+        '200':
+          description: Account number
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  account_number:
+                    type: string
+
+  /accounts/me/balance:
+    get:
+      summary: Get your account balance
+      security:
+        - ApiKeyAuth: []
+      responses:
+        '200':
+          description: Current balance
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  balance:
+                    type: number
+
+  /accounts/me/frozen:
+    get:
+      summary: Check if account is frozen
+      security:
+        - ApiKeyAuth: []
+      responses:
+        '200':
+          description: Frozen status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  frozen:
+                    type: boolean
+
+  /accounts/me/loans:
+    get:
+      summary: Get outstanding loans
+      security:
+        - ApiKeyAuth: []
+      responses:
+        '200':
+          description: Outstanding loan info
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total_due:
+                    type: number
+                  loans:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        loan_number:
+                          type: string
+                        due:
+                          type: number
+
+  /transactions:
+    post:
+      summary: Create a transaction
+      security:
+        - ApiKeyAuth: []
       requestBody:
         required: true
         content:
@@ -20,54 +173,85 @@ paths:
             schema:
               type: object
               properties:
-                recipientAccountId:
+                to_account_number:
                   type: string
-                  description: The account ID to receive the loan
-                amount:
-                  type: number
-                  description: The requested loan amount
-                termMonths:
+                to_bank_id:
                   type: integer
-                  description: Optional loan term in months
- 
-              required:
-                - recipientAccountId
-                - amount
+                amount:
+                  type: number
+                description:
+                  type: string
       responses:
         '200':
-          description: Loan issued successfully
+          description: Transaction result
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  recipientAccountId:
+                  success:
+                    type: boolean
+                  transaction_number:
                     type: string
-                  loanAmount:
-                    type: number
-                  interestRate:
-                    type: number
-                  totalRepayable:
-                    type: number
-                  loanIssuedAt:
+                  status:
                     type: string
-                    format: date-time
-        '400':
-          description: Loan denied due to reserve rule violation
+
+    get:
+      summary: Get bank statement
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: from
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date-time
+        - name: to
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date-time
+        - name: only_successful
+          in: query
+          required: false
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: List of transactions
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    example: Reserve requirement violated or insufficient liquidity
- 
-  /receive:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Transaction'
+
+  /transactions/{transaction_number}:
+    get:
+      summary: Get transaction details
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: transaction_number
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Transaction details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Transaction'
+
+  /loans:
     post:
-      summary: Receive a deposit into the Commercial Bank
-      description: >
-        Deposits money into a Commercial Bank account (e.g. THoH investment or company funding).
+      summary: Take out a loan
+      security:
+        - ApiKeyAuth: []
       requestBody:
         required: true
         content:
@@ -75,37 +259,47 @@ paths:
             schema:
               type: object
               properties:
-                recipientAccountId:
-                  type: string
-                  description: The account ID to receive the deposit
                 amount:
                   type: number
-                  description: The deposit amount
-              required:
-                - recipientAccountId
-                - amount
+                interest_rate:
+                  type: number
       responses:
         '200':
-          description: Deposit successful
+          description: Loan creation result
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  recipientAccountId:
+                  success:
+                    type: boolean
+                  loan_number:
                     type: string
-                  depositedAmount:
-                    type: number
-                  depositedAt:
-                    type: string
-                    format: date-time
- 
-  /transfer:
+    get:
+      summary: List all loans
+      security:
+        - ApiKeyAuth: []
+      responses:
+        '200':
+          description: List of loans
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Loan'
+
+  /loans/{loan_number}/pay:
     post:
-      summary: Transfer money between accounts
-      description: >
-        Transfers funds between two accounts. A 2% fee is charged. Retail Bank transfers must
-        maintain a 20% reserve requirement.
+      summary: Repay loan
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: loan_number
+          in: path
+          required: true
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -113,47 +307,57 @@ paths:
             schema:
               type: object
               properties:
-                fromAccountId:
-                  type: string
-                  description: Source account ID
-                toAccountId:
-                  type: string
-                  description: Destination account ID
                 amount:
                   type: number
-                  description: Amount to transfer (before fee)
-              required:
-                - fromAccountId
-                - toAccountId
-                - amount
       responses:
         '200':
-          description: Transfer successful
+          description: Payment result
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  fromAccountId:
-                    type: string
-                  toAccountId:
-                    type: string
-                  amountTransferred:
+                  success:
+                    type: boolean
+                  paid:
                     type: number
-                    description: Final amount delivered after fee
-                  feeCharged:
+                  overpayment:
                     type: number
-                    description: 2% fee amount
-                  transferredAt:
+
+
+  /loans/{loan_number}:
+    get:
+      summary: Get specific loan details
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: loan_number
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Loan details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  loan_number:
+                    type: string
+                  initial_amount:
+                    type: number
+                  outstanding:
+                    type: number
+                  interest_rate:
+                    type: number
+                  started_at:
                     type: string
                     format: date-time
-        '400':
-          description: Transfer denied due to insufficient funds or reserve rule violation
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    example: Reserve requirement violated or insufficient funds
+                  write_off:
+                    type: boolean
+                  payments:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/LoanPayment'
