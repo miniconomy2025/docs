@@ -74,7 +74,7 @@
       }
 
       // Try loading markdown
-      const mdUrl = `apis/${selectedProject}/api.md`;
+      const mdUrl = `docs/apis/${selectedProject}/api.md`;
       fetch(mdUrl)
         .then(res => {
           if (!res.ok) throw new Error("No markdown found");
@@ -94,17 +94,18 @@
       btn.setAttribute("data-project", project);
       btn.onclick = () => {
         history.pushState(null, "", `/${project}`);
-        loadSwaggerUI(`apis/${project}/api.yaml`, project);
+        loadSwaggerUI(`docs/apis/${project}/api.yaml`, project);
       };
       buttonsContainer.appendChild(btn);
     });
 
-    // Get project name from URL path
-    const currentPath = window.location.pathname.replace(/^\/+|\/+$/g, "");
-    const defaultProject = projects.includes(currentPath) ? currentPath : projects[0];
+    // Extract ?page=... from query string
+    const params = new URLSearchParams(window.location.search);
+    const pageParam = params.get("page");
+    const defaultProject = projects.includes(pageParam) ? pageParam : projects[0];
 
     // Load spec + markdown
-    loadSwaggerUI(`apis/${defaultProject}/api.yaml`, defaultProject);
+    loadSwaggerUI(`docs/apis/${defaultProject}/api.yaml`, defaultProject);
   </script>
 
 </body>
