@@ -1,0 +1,280 @@
+openapi: 3.0.3
+info:
+  title: Screen Supplier API
+  description: API for screen suppliers
+  version: 1.0.0
+  contact:
+    name: Screen Supplier Service
+servers:
+  - url: https://TBD
+    description: url
+
+paths:
+  /simulation/start:
+    post:
+      summary: Start simulation
+      description: Initialize the simulation environment
+      operationId: startSimulation
+      responses:
+        '200':
+          description: Simulation started successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "started"
+                  message:
+                    type: string
+                    example: "Simulation initialized"
+        '400':
+          description: Bad request
+        '500':
+          description: Internal server error
+
+  /purchase-parts:
+    post:
+      summary: Purchase screen parts
+      description: Place an order for screen parts, please use returned orderID as reference when paying our bank account
+      operationId: purchaseParts
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - quantity
+              properties:
+                quantity:
+                  type: integer
+                  minimum: 1
+                  description: Number of screens to purchase
+                  example: 100
+      responses:
+        '200':
+          description: Order placed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  orderId:
+                    type: string
+                    description: Unique identifier for the order
+                    example: "ORD-12345"
+                  totalPrice:
+                    type: number
+                    format: decimal
+                    description: Total price for the order
+                    example: 15000.00
+                  bankAccountNumber:
+                    type: string
+                    description: Bank account number for payment
+                    example: "ACC-987654321"
+                  orderStatusLink:
+                    type: string
+                    format: uri
+                    description: Link to check order status
+                    example: "/order/ORD-12345"
+        '400':
+          description: Invalid request
+        '422':
+          description: Insufficient inventory
+        '500':
+          description: Internal server error
+
+  /order/{id}:
+    get:
+      summary: Get order status
+      description: Retrieve the current status of an order [waiting payment, waiting collection, collected]
+      operationId: getOrderStatus
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Order ID
+          schema:
+            type: string
+            example: "ORD-12345"
+      responses:
+        '200':
+          description: Order status retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  orderId:
+                    type: string
+                    example: "ORD-12345"
+                  orderStatus:
+                    type: string
+                    enum: ["waiting payment", "waiting for collection", "collected"]
+                    description: Current status of the order
+                    example: "waiting payment"
+        '404':
+          description: Order not found
+        '500':
+          description: Internal server error
+
+  /available-parts:
+    get:
+      summary: Get available parts
+      description: Retrieve quantity and price of available screens
+      operationId: getAvailableParts
+      responses:
+        '200':
+          description: Available parts information
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  screens:
+                    type: object
+                    properties:
+                      quantity:
+                        type: integer
+                        description: Number of screens available
+                        example: 500
+                      price:
+                        type: number
+                        format: decimal
+                        description: Price per screen
+                        example: 150.00
+        '500':
+          description: Internal server error
+
+  /payment-made:
+    post:
+      summary: Payment notification
+      description: Called by commercial bank when payment is made to our account, will register with commercial bank
+      operationId: paymentMade
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - reference
+                - amount
+              properties:
+                reference:
+                  type: string
+                  description: Payment reference (typically order ID)
+                  example: "ORD-12345"
+                amount:
+                  type: number
+                  format: decimal
+                  description: Payment amount
+                  example: 15000.00
+      responses:
+        '200':
+          description: Payment processed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "payment_received"
+                  message:
+                    type: string
+                    example: "Payment processed and order status updated"
+        '400':
+          description: Invalid payment data
+        '404':
+          description: Order reference not found
+        '500':
+          description: Internal server error
+
+  /goods-delivered:
+    post:
+      summary: Goods delivery notification
+      description: Called by bulk logistics when delivering goods - please use orderID passed in on request pickup call to your service for us to identify the order
+      operationId: goodsDelivered
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - orderId
+              properties:
+                orderId:
+                  type: string
+                  description: Order ID for delivered goods
+                  example: "ORD-12345"
+      responses:
+        '200':
+          description: Delivery confirmed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "delivery_confirmed"
+        '400':
+          description: Invalid delivery data
+        '404':
+          description: Order not found
+        '500':
+          description: Internal server error
+
+  /goods-collection:
+    post:
+      summary: Goods collection notification
+      description: Called by bulk logistics when picking up goods - please use orderID passed in on request pickup call to your service for us to identify the order
+      operationId: goodsCollection
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - orderId
+              properties:
+                orderId:
+                  type: string
+                  description: Order ID for collected goods
+                  example: "ORD-12345"
+      responses:
+        '200':
+          description: Collection confirmed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "collection_confirmed"
+        '400':
+          description: Invalid collection data
+        '404':
+          description: Order not found
+        '500':
+          description: Internal server error
+
+components:
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error message
+        code:
+          type: string
+          description: Error code
+      required:
+        - error
