@@ -56,3 +56,13 @@ All entities will be given their unique secret API key before the simulation sta
     - Takes loan number + payment amount
     - Pays off the total due for the loan
     - If amount paid > amount due, only the minimum required to pay off the loan is taken
+
+- **Inter-bank Communications**
+  - INFO:
+    - Each bank manages their own internal accounts.
+    - When we send money to the other bank we use an account_ref that points to them, but we dont actually store any of their accounts on our system.
+    - As such, when another bank wants to transfer money to us, they must initiate an inter-bank transfer themselves
+    - Likewise, a similar system will be used when we want to transfer our own funds externally
+    - The Hand of Hḗphaistos will also be registered in the `banks` table as its own bank.
+      - It may send money to our account in the same way as any other bank & requires its own bank API key.
+  - **POST** | Transfer money from foreign bank account to a local bank account
