@@ -16,6 +16,7 @@ All entities will be given their unique secret API key before the simulation sta
 - **Accounts**
   - ~~**POST** | Create account~~ (REMOVED in favour of pre-existing accounts)
     - ~~Returns API key for further access~~
+  - **POST** | Set notification URL for received transactions
   - **GET** | Get account number for specific API key
   - **GET** | Check account balance
   - **GET** | Check account frozen status
@@ -32,6 +33,7 @@ All entities will be given their unique secret API key before the simulation sta
     - Returns success / failure + reason
     - Disallow transactions where `from == to`
     - Disallow transactions of amount <= 0
+    - Notifies the receiving party that they've received money (via their notification URL)
 
 - **Loans**
   - INFO:

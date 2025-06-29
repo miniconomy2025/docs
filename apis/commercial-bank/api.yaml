@@ -35,6 +35,24 @@ components:
         timestamp:
           type: string
           format: date-time
+    TransactionNotification:
+      type: object
+      properties:
+        transaction_number:
+          type: string
+        status:
+          type: string
+        amount:
+          type: number
+        timestamp:
+          type: string
+          format: date-time
+        description:
+          type: string
+        to:
+          type: string
+        from:
+          type: string
     Loan:
       type: object
       properties:
@@ -66,7 +84,7 @@ security:
   - ApiKeyAuth: []
 
 paths:
-  /accounts:
+  /account:
     post:
       deprecated: true
       summary: Create a new account
@@ -88,7 +106,7 @@ paths:
                   api_key:
                     type: string
 
-  /accounts/me:
+  /account/me:
     get:
       summary: Get your account number
       security:
@@ -104,7 +122,34 @@ paths:
                   account_number:
                     type: string
 
-  /accounts/me/balance:
+  /account/me/notify:
+    post:
+      summary: Set/Update your notification URL
+      description: |
+        If set, when a payment is received in your account, a callback request will be sent to this URL to notify you that you've received a payment
+        (See [**POST** `/transaction`](#/default/post_transaction) for more details)
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                notification_url:
+                  type: string
+      responses:
+        '200':
+          description: Notification URL updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+
+  /account/me/balance:
     get:
       summary: Get your account balance
       security:
@@ -120,7 +165,7 @@ paths:
                   balance:
                     type: number
 
-  /accounts/me/frozen:
+  /account/me/frozen:
     get:
       summary: Check if account is frozen
       security:
@@ -136,7 +181,7 @@ paths:
                   frozen:
                     type: boolean
 
-  /accounts/me/loans:
+  /account/me/loans:
     get:
       summary: Get outstanding loans
       security:
@@ -161,9 +206,29 @@ paths:
                         due:
                           type: number
 
-  /transactions:
+  /transaction:
     post:
       summary: Create a transaction
+      description: |
+        If the transaction is successful and the recipient account has a registered `notification_url`,
+        a `POST` request will be sent to that URL with the following payload:
+
+        ### Payment Notification Payload:
+        ```json
+        {
+          "transaction_number": "string",
+          "status": "string",
+          "amount": 123.45,
+          "timestamp": "2025-01-01T00:00:00Z",
+          "description": "string",
+          "from": "sender_account_number",
+          "to": "recipient_account_number"
+        }
+        ```
+
+        The receiving server must respond with `200 OK` to acknowledge the notification.
+
+        (See [**POST** `/account/me/notify`](#/default/post_account_me_notify) for setting your notification URL)
       security:
         - ApiKeyAuth: []
       requestBody:
@@ -228,7 +293,7 @@ paths:
                 items:
                   $ref: '#/components/schemas/Transaction'
 
-  /transactions/{transaction_number}:
+  /transaction/{transaction_number}:
     get:
       summary: Get transaction details
       security:
@@ -247,7 +312,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Transaction'
 
-  /loans:
+  /loan:
     post:
       summary: Take out a loan
       security:
@@ -289,7 +354,7 @@ paths:
                 items:
                   $ref: '#/components/schemas/Loan'
 
-  /loans/{loan_number}/pay:
+  /loan/{loan_number}/pay:
     post:
       summary: Repay loan
       security:
@@ -325,7 +390,7 @@ paths:
                     type: number
 
 
-  /loans/{loan_number}:
+  /loan/{loan_number}:
     get:
       summary: Get specific loan details
       security:
