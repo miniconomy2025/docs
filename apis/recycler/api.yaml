@@ -1,0 +1,218 @@
+openapi: 3.0.0
+info:
+  title: Recycler API for Economic Simulator
+  version: 1.0.0
+  description: >
+    API for simulating recycling operations in a mini economy.
+    Includes phone recycling, raw material tracking, supplier orders, and company registration.
+
+paths:
+
+  /materials:
+    get:
+      summary: Get info on raw materials
+      description: Returns a list of raw materials currently available in the Recycler's inventory.
+      responses:
+        '200':
+          description: Successfully retrieved raw materials
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  materials:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                        name:
+                          type: string
+                        available_quantity_in_kg:
+                          type: number
+                          format: float
+                        price:
+                          type: number
+                          format: float
+
+  /orders:
+    post:
+      summary: Create a raw materials order
+      description: Allows a supplier to create an order for specific raw materials.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                supplierId:
+                  type: integer
+                items:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      materialId:
+                        type: integer
+                      quantity:
+                        type: number
+              required:
+                - supplierId
+                - items
+      responses:
+        '201':
+          description: Order created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  orderNumber:
+                    type: string
+                    format: uuid
+                  status:
+                    type: string
+
+    get:
+      summary: View all orders
+      description: Retrieves a list of all orders submitted by a specific supplier.
+      responses:
+        '200':
+          description: List of orders with details
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    orderNumber:
+                      type: string
+                      format: uuid
+                    supplierName:
+                      type: string
+                    createdAt:
+                      type: string
+                      format: date-time
+                    status:
+                      type: string
+
+  /orders/{order_number}:
+    get:
+      summary: View specific order by order number
+      description: Retrieves a single order's details by its order number.
+      parameters:
+        - name: order_number
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Order details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  orderNumber:
+                    type: string
+                    format: uuid
+                  supplierName:
+                    type: string
+                  createdAt:
+                    type: string
+                    format: date-time
+                  status:
+                    type: string
+                  items:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        material:
+                          type: string
+                        quantity:
+                          type: number
+                        price:
+                          type: number
+
+  /companies:
+    post:
+      summary: Create a company
+      description: Registers a new company with a defined role (e.g., Supplier, Recycler).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                roleId:
+                  type: integer
+              required:
+                - name
+                - roleId
+      responses:
+        '201':
+          description: Company created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  companyId:
+                    type: integer
+                  name:
+                    type: string
+                  role:
+                    type: string
+
+  /pop:
+    patch:
+      summary: Submit Proof of Payment (POP)
+      description: Retrieves a POP document for a completed order.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                orderId:
+                  type: integer
+              required:
+                - orderId
+      responses:
+        '200':
+          description: POP document retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  orderId:
+                    type: integer
+                  orderNumber:
+                    type: string
+                    format: uuid
+                  supplierName:
+                    type: string
+                  materials:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        material:
+                          type: string
+                        quantity:
+                          type: number
+                        price:
+                          type: number
+                  confirmationMessage:
+                    type: string
