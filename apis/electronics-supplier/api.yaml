@@ -7,10 +7,25 @@ info:
 servers:
   - url: http://localhost:8080
 
+tags:
+  - name: Machines
+    description: Manage machines and machine orders
+  - name: Materials
+    description: Manage materials, suppliers, and material orders
+  - name: Supplies
+    description: Track supply deliveries and usage
+  - name: Electronics
+    description: Produce and manage electronics and electronics orders
+  - name: Reports
+    description: Generate reports for production and analytics
+  - name: Inventory
+    description: Monitor inventory levels across the system
+
 paths:
 
   /machines:
     get:
+      tags: [Machines]
       summary: List all machines
       responses:
         200:
@@ -22,6 +37,7 @@ paths:
                 items:
                   $ref: '#/components/schemas/Machine'
     post:
+      tags: [Machines]
       summary: Create a new machine
       requestBody:
         required: true
@@ -35,6 +51,7 @@ paths:
 
   /machines/{machineId}:
     get:
+      tags: [Machines]
       summary: Get a specific machine
       parameters:
         - in: path
@@ -50,6 +67,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Machine'
     put:
+      tags: [Machines]
       summary: Update a specific machine
       parameters:
         - in: path
@@ -67,6 +85,7 @@ paths:
         200:
           description: Machine updated
     delete:
+      tags: [Machines]
       summary: Delete a machine
       parameters:
         - in: path
@@ -80,6 +99,7 @@ paths:
 
   /machines/orders:
     post:
+      tags: [Machines]
       summary: Create a machine order
       requestBody:
         required: true
@@ -91,6 +111,7 @@ paths:
         201:
           description: Machine order created
     get:
+      tags: [Machines]
       summary: List machine orders
       responses:
         200:
@@ -104,6 +125,7 @@ paths:
 
   /materials/orders:
     get:
+      tags: [Materials]
       summary: List material orders
       responses:
         200:
@@ -115,6 +137,7 @@ paths:
                 items:
                   $ref: '#/components/schemas/MaterialOrder'
     post:
+      tags: [Materials]
       summary: Create a material order
       requestBody:
         required: true
@@ -128,6 +151,7 @@ paths:
 
   /materials/orders/{orderId}:
     get:
+      tags: [Materials]
       summary: Get a specific material order
       parameters:
         - in: path
@@ -143,6 +167,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/MaterialOrder'
     put:
+      tags: [Materials]
       summary: Update a material order
       parameters:
         - in: path
@@ -161,6 +186,7 @@ paths:
 
   /supplies:
     get:
+      tags: [Supplies]
       summary: List all supplies
       responses:
         200:
@@ -172,6 +198,7 @@ paths:
                 items:
                   $ref: '#/components/schemas/Supply'
     post:
+      tags: [Supplies]
       summary: Add a supply
       requestBody:
         required: true
@@ -183,6 +210,7 @@ paths:
         201:
           description: Supply created
     delete:
+      tags: [Supplies]
       summary: Delete all supplies (or filter by material)
       responses:
         204:
@@ -190,6 +218,7 @@ paths:
 
   /supplies/{materialId}:
     get:
+      tags: [Supplies]
       summary: Get all supplies for a material
       parameters:
         - in: path
@@ -209,6 +238,7 @@ paths:
 
   /electronics:
     post:
+      tags: [Electronics]
       summary: Produce a new electronic device
       description: Consumes available supplies and creates a new electronic device record.
       requestBody:
@@ -233,6 +263,7 @@ paths:
 
   /electronics/orders:
     get:
+      tags: [Electronics]
       summary: List electronics orders
       responses:
         200:
@@ -244,6 +275,7 @@ paths:
                 items:
                   $ref: '#/components/schemas/ElectronicsOrder'
     post:
+      tags: [Electronics]
       summary: Create a new electronics order
       requestBody:
         required: true
@@ -257,6 +289,7 @@ paths:
 
   /electronics/orders/{orderId}:
     get:
+      tags: [Electronics]
       summary: Get an electronics order
       parameters:
         - in: path
@@ -272,6 +305,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ElectronicsOrder'
     put:
+      tags: [Electronics]
       summary: Update electronics order
       parameters:
         - in: path
@@ -289,6 +323,7 @@ paths:
           description: Electronics order updated
   /inventory:
     get:
+      tags: [Inventory]
       summary: Get current inventory summary
       description: Returns summary of machines, materials, supplies, and electronics in stock.
       responses:
@@ -298,9 +333,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/InventorySummary'
-                
+
   /reports/production:
     get:
+      tags: [Reports]
       summary: Get production report
       description: Returns a summary of electronics produced during a date range.
       parameters:
