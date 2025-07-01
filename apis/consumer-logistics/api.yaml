@@ -13,7 +13,7 @@ paths:
     post:
       tags:
         - Pickup Management
-      summary: Create a new pickup
+      summary: Create a new pickup request
       requestBody:
         required: true
         content:
@@ -24,9 +24,11 @@ paths:
                 quantity:
                   type: integer
                   example: 10
-                company_name:
+                customer:
                   type: string
-                  example: "TechCorp"
+                  example: Mazibuko
+                
+                
       responses:
         202:
           description: Pickup received successfully
@@ -35,12 +37,36 @@ paths:
               schema:
                 type: object
                 properties:
-                  reference:
+                  refernceno:
                     type: integer
                     example: 123
                   amount:
                     type: number
                     example: 100.0
+        400:
+          description: Bad Request - Invalid input data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Invalid quantity provided."
+        500:
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "An unexpected error occurred."
+                  timestamp:
+                    type: string
+                    format: date-time
+                  
 
     get:
       tags:
@@ -48,12 +74,6 @@ paths:
       summary: List all pickups for a company
       description: Retrieve all pickups for a specific company, optionally filtered by status.
       parameters:
-        - name: company_name
-          in: query
-          required: true
-          schema:
-            type: string
-          example: "TechCorp"
         - name: status
           in: query
           required: false
@@ -73,9 +93,35 @@ paths:
                     id:
                       type: integer
                       example: 123
+                    quantity:
+                      type: integer
+                      example: 10
+                    company_name:
+                      type: string
+                      example: "TechCorp"
                     status:
                       type: string
                       example: "Delivered"
+        404:
+          description: Not Found - No pickups available
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "No pickups found for the specified criteria."
+        500:
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "An unexpected error occurred."
 
   /companies:
     post:
@@ -107,6 +153,26 @@ paths:
                   company_name:
                     type: string
                     example: "TechCorp"
+        400:
+          description: Bad Request - Invalid input data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Invalid company name provided."
+        500:
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "An unexpected error occurred."
 
     get:
       tags:
