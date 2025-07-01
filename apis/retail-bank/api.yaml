@@ -118,7 +118,7 @@ paths:
     post:
       tags:
         - TransferEndpoints
-      description: "Transfer money between accounts. Debiting account\r\n`from` and crediting account `to`."
+      description: "Transfer money between accounts. Debiting account\r\n`from` and crediting account `to`. This can be used \r\nfor transfers between retail bank accounts, and \r\nfor transfers to the commercial bank. Retail bank \r\naccount numbers start with `1000`, while commercial \r\nbank account numbers start with `2000`."
       requestBody:
         content:
           application/json:
