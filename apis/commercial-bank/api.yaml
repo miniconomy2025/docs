@@ -326,8 +326,6 @@ paths:
               properties:
                 amount:
                   type: number
-                interest_rate:
-                  type: number
       responses:
         '200':
           description: Loan creation result
