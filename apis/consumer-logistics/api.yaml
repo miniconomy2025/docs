@@ -24,7 +24,10 @@ paths:
                 quantity:
                   type: integer
                   example: 10
-                customer:
+                pickup_from:
+                  type: string
+                  example: AbTech
+                delivery_to:
                   type: string
                   example: Mazibuko
                 
