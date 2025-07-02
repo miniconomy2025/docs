@@ -7,274 +7,441 @@ info:
     name: Screen Supplier Service
 servers:
   - url: https://TBD
-    description: url
+
+tags:
+  - name: Screen
+    description: Screen products and inventory
+  - name: Orders
+    description: Customer screen orders
+  - name: Payments
+    description: Payment confirmations from bank
+  - name: Logistics
+    description: Pickup and delivery operations
+  - name: Simulation
+    description: Simulation time management and control
 
 paths:
-  /simulation/start:
-    post:
-      summary: Start simulation
-      description: Initialize the simulation environment
-      operationId: startSimulation
+  /screens:
+    get:
+      tags:
+        - Screen
+      summary: Get screens on offer, and current price based on our average costs
+      description: Returns available screen inventory and current pricing
       responses:
         '200':
-          description: Simulation started successfully
+          description: Available screens and pricing
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  status:
-                    type: string
-                    example: "started"
-                  message:
-                    type: string
-                    example: "Simulation initialized"
-        '400':
-          description: Bad request
-        '500':
-          description: Internal server error
+                $ref: '#/components/schemas/ProductResponse'
 
-  /purchase-parts:
+  /order:
     post:
-      summary: Purchase screen parts
-      description: Place an order for screen parts, please use returned orderID as reference when paying our bank account
-      operationId: purchaseParts
+      tags:
+        - Orders
+      summary: Create a new screen order
+      description: Create a new order for screens from customers
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              type: object
-              required:
-                - quantity
-              properties:
-                quantity:
-                  type: integer
-                  minimum: 1
-                  description: Number of screens to purchase
-                  example: 100
+              $ref: '#/components/schemas/CreateOrderRequest'
       responses:
-        '200':
-          description: Order placed successfully
+        '201':
+          description: Order created successfully
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  orderId:
-                    type: string
-                    description: Unique identifier for the order
-                    example: "ORD-12345"
-                  totalPrice:
-                    type: number
-                    format: decimal
-                    description: Total price for the order
-                    example: 15000.00
-                  bankAccountNumber:
-                    type: string
-                    description: Bank account number for payment
-                    example: "ACC-987654321"
-                  orderStatusLink:
-                    type: string
-                    format: uri
-                    description: Link to check order status
-                    example: "/order/ORD-12345"
+                $ref: '#/components/schemas/CreateOrderResponse'
         '400':
-          description: Invalid request
-        '422':
-          description: Insufficient inventory
-        '500':
-          description: Internal server error
+          description: Invalid request or insufficient stock
 
   /order/{id}:
     get:
-      summary: Get order status
-      description: Retrieve the current status of an order [waiting payment, waiting collection, collected]
-      operationId: getOrderStatus
+      tags:
+        - Orders
+      summary: Get order status and details
+      description: Retrieve the current status and details of a specific order
       parameters:
         - name: id
           in: path
           required: true
-          description: Order ID
           schema:
-            type: string
-            example: "ORD-12345"
+            type: integer
+          description: Order ID
       responses:
         '200':
-          description: Order status retrieved successfully
+          description: Order details
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  orderId:
-                    type: string
-                    example: "ORD-12345"
-                  orderStatus:
-                    type: string
-                    enum: ["waiting payment", "waiting for collection", "collected"]
-                    description: Current status of the order
-                    example: "waiting payment"
+                $ref: '#/components/schemas/OrderStatusResponse'
         '404':
           description: Order not found
-        '500':
-          description: Internal server error
 
-  /available-parts:
-    get:
-      summary: Get available parts
-      description: Retrieve quantity and price of available screens
-      operationId: getAvailableParts
-      responses:
-        '200':
-          description: Available parts information
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  screens:
-                    type: object
-                    properties:
-                      quantity:
-                        type: integer
-                        description: Number of screens available
-                        example: 500
-                      price:
-                        type: number
-                        format: decimal
-                        description: Price per screen
-                        example: 150.00
-        '500':
-          description: Internal server error
-
-  /payment-made:
+  /payment:
     post:
-      summary: Payment notification
-      description: Called by commercial bank when payment is made to our account, will register with commercial bank
-      operationId: paymentMade
+      tags:
+        - Payments
+      summary: Process payment confirmation from bank for screen orders
+      description: |
+        Endpoint called by the commercial bank to confirm payments.
+        Updates order status and payment amounts.
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              type: object
-              required:
-                - reference
-                - amount
-              properties:
-                reference:
-                  type: string
-                  description: Payment reference (typically order ID)
-                  example: "ORD-12345"
-                amount:
-                  type: number
-                  format: decimal
-                  description: Payment amount
-                  example: 15000.00
+              $ref: '#/components/schemas/PaymentConfirmationRequest'
       responses:
         '200':
           description: Payment processed successfully
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  status:
-                    type: string
-                    example: "payment_received"
-                  message:
-                    type: string
-                    example: "Payment processed and order status updated"
+                $ref: '#/components/schemas/PaymentConfirmationResponse'
         '400':
-          description: Invalid payment data
-        '404':
-          description: Order reference not found
-        '500':
-          description: Internal server error
+          description: Invalid payment request
 
-  /goods-delivered:
+  /logistics:
     post:
-      summary: Goods delivery notification
-      description: Called by bulk logistics when delivering goods - please use orderID passed in on request pickup call to your service for us to identify the order
-      operationId: goodsDelivered
+      tags:
+        - Logistics
+      summary: Handle logistics operations - both deliveries and pickups
+      description: |
+        Unified endpoint for logistics operations:
+        - **DELIVERY**: Bulk logistics delivers materials/equipment to us
+        - **PICKUP**: Bulk logistics picks up screens from us for customers
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              type: object
-              required:
-                - orderId
-              properties:
-                orderId:
-                  type: string
-                  description: Order ID for delivered goods
-                  example: "ORD-12345"
+              $ref: '#/components/schemas/LogisticsRequest'
       responses:
         '200':
-          description: Delivery confirmed successfully
+          description: Logistics operation completed
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  status:
-                    type: string
-                    example: "delivery_confirmed"
+                $ref: '#/components/schemas/LogisticsResponse'
         '400':
-          description: Invalid delivery data
+          description: Invalid logistics request
         '404':
-          description: Order not found
-        '500':
-          description: Internal server error
+          description: Order not found or not ready
 
-  /goods-collection:
+  /simulation:
     post:
-      summary: Goods collection notification
-      description: Called by bulk logistics when picking up goods - please use orderID passed in on request pickup call to your service for us to identify the order
-      operationId: goodsCollection
+      tags:
+        - Simulation
+      summary: Start the simulation with Unix epoch timestamp
+      description: |
+        Initialize and start the simulation time system.
+        
+        **Time System:**
+        - Accepts Unix epoch timestamp for synchronization
+        - 2 real minutes = 1 simulation day
+        - Simulation date starts at 2050-01-01
+        - Daily production cycles run automatically
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              type: object
-              required:
-                - orderId
-              properties:
-                orderId:
-                  type: string
-                  description: Order ID for collected goods
-                  example: "ORD-12345"
+              $ref: '#/components/schemas/SimulationStartRequest'
       responses:
         '200':
-          description: Collection confirmed successfully
+          description: Simulation started successfully
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  status:
-                    type: string
-                    example: "collection_confirmed"
+                $ref: '#/components/schemas/SimulationStartResponse'
         '400':
-          description: Invalid collection data
-        '404':
-          description: Order not found
-        '500':
-          description: Internal server error
+          description: Invalid start time or simulation already running
+
+    get:
+      tags:
+        - Simulation
+      summary: Get current simulation status and time
+      description: |
+        Returns the current simulation state including:
+        - Running status
+        - Current simulation day
+        - Simulation date/time
+        - Time remaining until next day
+      responses:
+        '200':
+          description: Current simulation status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SimulationStatusResponse'
+
 
 components:
   schemas:
+    # Product/Screen schemas
+    ProductResponse:
+      type: object
+      properties:
+        screens:
+          $ref: '#/components/schemas/Screens'
+
+    Screens:
+      type: object
+      properties:
+        quantity:
+          type: integer
+          description: Available screens in stock
+          example: 1500
+        price:
+          type: integer
+          description: Price per screen in currency units
+          example: 250
+
+    # Order schemas
+    CreateOrderRequest:
+      type: object
+      required:
+        - quantity
+      properties:
+        quantity:
+          type: integer
+          minimum: 1
+          description: Number of screens to order
+          example: 100
+
+    CreateOrderResponse:
+      type: object
+      properties:
+        orderId:
+          type: integer
+          description: Unique order identifier
+          example: 12345
+        totalPrice:
+          type: integer
+          description: Total order amount
+          example: 25000
+        bankAccountNumber:
+          type: string
+          description: Our bank account for payment
+          example: "1234"
+        orderStatusLink:
+          type: string
+          description: URL to check order status
+          example: "/order/12345"
+
+    OrderStatusResponse:
+      type: object
+      properties:
+        orderId:
+          type: integer
+          example: 12345
+        quantity:
+          type: integer
+          example: 100
+        unitPrice:
+          type: integer
+          example: 250
+        totalPrice:
+          type: integer
+          example: 25000
+        status:
+          type: string
+          enum: [waiting_payment, waiting_collection, collected, abandoned]
+          example: "waiting_payment"
+        orderDate:
+          type: string
+          format: date-time
+          example: "2050-01-15T00:00:00"
+        amountPaid:
+          type: integer
+          nullable: true
+          description: Amount paid so far
+          example: 15000
+        remainingBalance:
+          type: integer
+          description: Amount still owed
+          example: 10000
+        isFullyPaid:
+          type: boolean
+          example: false
+
+    # Payment schemas
+    PaymentConfirmationRequest:
+      type: object
+      required:
+        - referenceId
+        - accountNumber
+        - amountPaid
+      properties:
+        referenceId:
+          type: string
+          description: Order ID as reference
+          example: "12345"
+        accountNumber:
+          type: string
+          description: Paying account number
+          example: "2345"
+        amountPaid:
+          type: number
+          format: decimal
+          description: Amount paid in this transaction
+          example: 15000.00
+
+    PaymentConfirmationResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        orderId:
+          type: string
+          example: "12345"
+        amountReceived:
+          type: number
+          format: decimal
+          example: 15000.00
+        totalPaid:
+          type: number
+          format: decimal
+          example: 15000.00
+        orderTotal:
+          type: number
+          format: decimal
+          example: 25000.00
+        remainingBalance:
+          type: number
+          format: decimal
+          example: 10000.00
+        status:
+          type: string
+          example: "waiting_payment"
+        message:
+          type: string
+          example: "Partial payment received. Remaining balance: 10000"
+        isFullyPaid:
+          type: boolean
+          example: false
+        processedAt:
+          type: string
+          format: date-time
+          example: "2050-01-15T10:30:00Z"
+
+    # Logistics schemas
+    LogisticsRequest:
+      type: object
+      required:
+        - id
+        - type
+        - quantity
+      properties:
+        id:
+          type: integer
+          description: Order ID (for pickup) or Shipment ID (for delivery)
+          example: 67890
+        type:
+          type: string
+          enum: [PICKUP, DELIVERY]
+          description: Type of logistics operation
+          example: "DELIVERY"
+        quantity:
+          type: integer
+          minimum: 1
+          description: Quantity being moved
+          example: 1000
+
+    LogisticsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        id:
+          type: integer
+          description: Shipment ID (for delivery) or Order ID (for pickup)
+          example: 67890
+        orderId:
+          type: integer
+          description: Related order ID
+          example: 12345
+        quantity:
+          type: integer
+          description: Quantity processed
+          example: 1000
+        itemType:
+          type: string
+          description: Type of items (screens, sand, copper, equipment)
+          example: "sand"
+        message:
+          type: string
+          description: Operation result message
+          example: "Successfully received 1000 units of sand"
+        processedAt:
+          type: string
+          format: date-time
+          example: "2050-01-15T14:00:00Z"
+
+    # Simulation schemas
+    SimulationStartRequest:
+      type: object
+      required:
+        - unixEpochStart
+      properties:
+        unixEpochStart:
+          type: integer
+          format: int64
+          description: Unix timestamp when simulation should start
+          example: 1735826400
+
+    SimulationStartResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Simulation started successfully"
+        startedAt:
+          type: string
+          format: date-time
+          description: When simulation started (ISO format)
+          example: "2025-01-02T12:00:00+00:00"
+        currentDay:
+          type: integer
+          description: Current simulation day (0-based)
+          example: 0
+        simulationDateTime:
+          type: string
+          format: date-time
+          description: Current simulation date/time
+          example: "2050-01-01T00:00:00"
+
+    SimulationStatusResponse:
+      type: object
+      properties:
+        isRunning:
+          type: boolean
+          description: Whether simulation is currently running
+          example: true
+        currentDay:
+          type: integer
+          description: Current simulation day (0-based)
+          example: 5
+        simulationDateTime:
+          type: string
+          format: date-time
+          description: Current simulation date/time
+          example: "2050-01-06T00:00:00"
+        
+
+    # Error schema
     Error:
       type: object
       properties:
         error:
           type: string
           description: Error message
-        code:
-          type: string
-          description: Error code
-      required:
-        - error
+          example: "Invalid request parameters"
