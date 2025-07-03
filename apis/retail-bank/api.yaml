@@ -1,0 +1,337 @@
+openapi: 3.0.1
+info:
+  title: RetailBank
+  version: '1.0'
+paths:
+  /accounts:
+    post:
+      tags:
+        - AccountEndpoints
+      description: "Create a transactional account. Transactional \r\naccounts have an account number consisting of 12 \r\ndigits starting with `1000`."
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTransactionAccountRequest'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateAccountResponse'
+  '/accounts/{id}':
+    get:
+      tags:
+        - AccountEndpoints
+      description: "Get information about any account.\r\n\r\nNotable accounts:\r\n- Retail Bank Main Account: `1000`\r\n- Owners Equity Account: `1001`\r\n- Interest Income Account: `1002`\r\n- Loan Control Account: `1003`\r\n- Bad Debts Account: `1004`\r\n- Commercial Bank: `2000`"
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LedgerAccount'
+        '404':
+          description: Not Found
+  '/accounts/{id}/transfers':
+    get:
+      tags:
+        - AccountEndpoints
+      description: "Get all transfers credited/debited to an account,\r\nreturns empty array if account does not exist.\r\n`next` will contain the URL for the next batch of\r\ntranfers, or it will be `null` if no transfers were returned."
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            format: int32
+            default: 25
+        - name: timestampMax
+          in: query
+          schema:
+            type: integer
+            format: int64
+            default: 0
+        - name: side
+          in: query
+          schema:
+            $ref: '#/components/schemas/TransferSide'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransferEventCursorPagination'
+  /loans:
+    post:
+      tags:
+        - LoanEndpoints
+      description: "Create a loan account of the requested amount,\r\nand deposit the principal amount into the debtor's\r\naccount. Each month, interest will be added to the\r\nto the loan account, and an installment will be\r\ntranferred from the debtor's account to the loan\r\naccount. The loan will pay itself off after 60 months."
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateLoanAccountRequest'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateAccountResponse'
+  /simulation:
+    post:
+      tags:
+        - SimulationEndpoints
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Bad Request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+    delete:
+      tags:
+        - SimulationEndpoints
+      responses:
+        '200':
+          description: OK
+  /transfers:
+    post:
+      tags:
+        - TransferEndpoints
+      description: "Transfer money between accounts. Debiting account\r\n`from` and crediting account `to`. This can be used \r\nfor transfers between retail bank accounts, and \r\nfor transfers to the commercial bank. Retail bank \r\naccount numbers start with `1000`, while commercial \r\nbank account numbers start with `2000`."
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTransferRequest'
+        required: true
+      responses:
+        '201':
+          description: Created
+        '400':
+          description: Bad Request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '409':
+          description: Conflict
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+    get:
+      tags:
+        - TransferEndpoints
+      description: "Get all transfers. `next` will contain the URL for\r\nthe next batch of tranfers, or it will be `null` if\r\nno transfers were returned."
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            format: int32
+            default: 25
+        - name: timestampMax
+          in: query
+          schema:
+            type: integer
+            format: int64
+            default: 0
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransferEventCursorPagination'
+  '/transfers/{id}':
+    get:
+      tags:
+        - TransferEndpoints
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransferEvent'
+        '404':
+          description: Not Found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+components:
+  schemas:
+    CreateAccountResponse:
+      type: object
+      properties:
+        accountId:
+          type: integer
+          format: int64
+      additionalProperties: false
+    CreateLoanAccountRequest:
+      type: object
+      properties:
+        loanAmountCents:
+          type: integer
+          format: int64
+        debtorAccountNumber:
+          type: integer
+          format: int64
+      additionalProperties: false
+    CreateTransactionAccountRequest:
+      type: object
+      properties:
+        salaryCents:
+          type: integer
+          format: int64
+      additionalProperties: false
+    CreateTransferRequest:
+      type: object
+      properties:
+        from:
+          type: integer
+          format: int64
+        to:
+          type: integer
+          format: int64
+        amountCents:
+          type: integer
+          format: int128
+      additionalProperties: false
+    LedgerAccount:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int128
+        accountType:
+          $ref: '#/components/schemas/LedgerAccountCode'
+        debitsPending:
+          type: integer
+          format: int128
+        debitsPosted:
+          type: integer
+          format: int128
+        creditsPending:
+          type: integer
+          format: int128
+        creditsPosted:
+          type: integer
+          format: int128
+        balancePending:
+          type: integer
+          format: int128
+          readOnly: true
+        balancePosted:
+          type: integer
+          format: int128
+          readOnly: true
+      additionalProperties: false
+    LedgerAccountCode:
+      enum:
+        - Bank
+        - Internal
+        - Transactional
+        - Loan
+      type: string
+    ProblemDetails:
+      type: object
+      properties:
+        type:
+          type: string
+          nullable: true
+        title:
+          type: string
+          nullable: true
+        status:
+          type: integer
+          format: int32
+          nullable: true
+        detail:
+          type: string
+          nullable: true
+        instance:
+          type: string
+          nullable: true
+      additionalProperties: {}
+    TransferEvent:
+      type: object
+      properties:
+        transactionId:
+          type: string
+          nullable: true
+        debitAccountNumber:
+          type: integer
+          format: int128
+        creditAccountNumber:
+          type: integer
+          format: int128
+        amount:
+          type: integer
+          format: int128
+        pendingId:
+          type: string
+          nullable: true
+        timestamp:
+          type: integer
+          format: int64
+        eventType:
+          $ref: '#/components/schemas/TransferEventType'
+      additionalProperties: false
+    TransferEventCursorPagination:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/TransferEvent'
+          nullable: true
+        next:
+          type: string
+          nullable: true
+      additionalProperties: false
+    TransferEventType:
+      enum:
+        - Transfer
+        - StartTransfer
+        - CompleteTransfer
+        - CancelTransfer
+        - ClosingCredit
+        - ClosingDebit
+        - ReopenCredit
+        - ReopenDebit
+      type: string
+    TransferSide:
+      enum:
+        - Debit
+        - Credit
+        - Any
+      type: string
