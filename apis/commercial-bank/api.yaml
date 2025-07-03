@@ -352,8 +352,6 @@ paths:
                     type: boolean
                   paid:
                     type: number
-                  overpayment:
-                    type: number
 
 
   /loan/{loan_number}:
