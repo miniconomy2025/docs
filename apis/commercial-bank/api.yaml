@@ -4,17 +4,11 @@ info:
   version: 1.0.0
   description: |
     Commercial bank API for managing accounts, transactions, and loans.
-    All endpoints (except account creation) require an `X-API-Key` header.
 
 servers:
   - url: https://localhost:8080
 
 components:
-  securitySchemes:
-    ApiKeyAuth:
-      type: apiKey
-      in: header
-      name: X-API-Key
   schemas:
     Transaction:
       type: object
@@ -33,8 +27,8 @@ components:
         status:
           type: string
         timestamp:
-          type: string
-          format: date-time
+          type: number
+          format: float
     TransactionNotification:
       type: object
       properties:
@@ -45,8 +39,8 @@ components:
         amount:
           type: number
         timestamp:
-          type: string
-          format: date-time
+          type: number
+          format: float
         description:
           type: string
         to:
@@ -63,8 +57,8 @@ components:
         interest_rate:
           type: number
         started_at:
-          type: string
-          format: date-time
+          type: number
+          format: float
         write_off:
           type: boolean
         outstanding_amount:
@@ -73,20 +67,17 @@ components:
       type: object
       properties:
         timestamp:
-          type: string
-          format: date-time
+          type: number
+          format: float
         amount:
           type: number
         is_interest:
           type: boolean
 
-security:
-  - ApiKeyAuth: []
 
 paths:
   /account:
     post:
-      deprecated: true
       summary: Create a new account
       requestBody:
         content:
@@ -103,14 +94,10 @@ paths:
                 properties:
                   account_number:
                     type: string
-                  api_key:
-                    type: string
 
   /account/me:
     get:
       summary: Get your account number
-      security:
-        - ApiKeyAuth: []
       responses:
         '200':
           description: Account number
@@ -128,8 +115,6 @@ paths:
       description: |
         If set, when a payment is received in your account, a callback request will be sent to this URL to notify you that you've received a payment
         (See [**POST** `/transaction`](#/default/post_transaction) for more details)
-      security:
-        - ApiKeyAuth: []
       requestBody:
         content:
           application/json:
@@ -152,8 +137,6 @@ paths:
   /account/me/balance:
     get:
       summary: Get your account balance
-      security:
-        - ApiKeyAuth: []
       responses:
         '200':
           description: Current balance
@@ -168,8 +151,6 @@ paths:
   /account/me/frozen:
     get:
       summary: Check if account is frozen
-      security:
-        - ApiKeyAuth: []
       responses:
         '200':
           description: Frozen status
@@ -184,8 +165,6 @@ paths:
   /account/me/loans:
     get:
       summary: Get outstanding loans
-      security:
-        - ApiKeyAuth: []
       responses:
         '200':
           description: Outstanding loan info
@@ -219,7 +198,7 @@ paths:
           "transaction_number": "string",
           "status": "string",
           "amount": 123.45,
-          "timestamp": "2025-01-01T00:00:00Z",
+          "timestamp": 3.507,
           "description": "string",
           "from": "sender_account_number",
           "to": "recipient_account_number"
@@ -229,8 +208,6 @@ paths:
         The receiving server must respond with `200 OK` to acknowledge the notification.
 
         (See [**POST** `/account/me/notify`](#/default/post_account_me_notify) for setting your notification URL)
-      security:
-        - ApiKeyAuth: []
       requestBody:
         required: true
         content:
@@ -240,8 +217,9 @@ paths:
               properties:
                 to_account_number:
                   type: string
-                to_bank_id:
-                  type: integer
+                to_bank_name:
+                  type: string
+                  enum: ["commercial-bank", "retail-bank"]
                 amount:
                   type: number
                 description:
@@ -263,21 +241,19 @@ paths:
 
     get:
       summary: Get bank statement
-      security:
-        - ApiKeyAuth: []
       parameters:
         - name: from
           in: query
           required: true
           schema:
-            type: string
-            format: date-time
+            type: number
+            format: float
         - name: to
           in: query
           required: true
           schema:
-            type: string
-            format: date-time
+            type: number
+            format: float
         - name: only_successful
           in: query
           required: false
@@ -296,8 +272,6 @@ paths:
   /transaction/{transaction_number}:
     get:
       summary: Get transaction details
-      security:
-        - ApiKeyAuth: []
       parameters:
         - name: transaction_number
           in: path
@@ -315,8 +289,6 @@ paths:
   /loan:
     post:
       summary: Take out a loan
-      security:
-        - ApiKeyAuth: []
       requestBody:
         required: true
         content:
@@ -340,8 +312,6 @@ paths:
                     type: string
     get:
       summary: List all loans
-      security:
-        - ApiKeyAuth: []
       responses:
         '200':
           description: List of loans
@@ -355,8 +325,6 @@ paths:
   /loan/{loan_number}/pay:
     post:
       summary: Repay loan
-      security:
-        - ApiKeyAuth: []
       parameters:
         - name: loan_number
           in: path
@@ -391,8 +359,6 @@ paths:
   /loan/{loan_number}:
     get:
       summary: Get specific loan details
-      security:
-        - ApiKeyAuth: []
       parameters:
         - name: loan_number
           in: path
@@ -416,8 +382,8 @@ paths:
                   interest_rate:
                     type: number
                   started_at:
-                    type: string
-                    format: date-time
+                    type: number
+                    format: float
                   write_off:
                     type: boolean
                   payments:
@@ -430,9 +396,7 @@ paths:
       summary: Notify of incoming inter-bank transfer
       description: |
         Used by foreign banks to notify this system that a transfer has been initiated from one of their accounts to a local account.
-        The request must include a valid bank API key and sufficient details to record the transaction.
-      security:
-        - ApiKeyAuth: []
+        The request must be issued with a valid signed certificate to identify the bank of origin and must include sufficient details to record the transaction.
       requestBody:
         required: true
         content:
@@ -442,7 +406,7 @@ paths:
               required:
                 - transaction_number
                 - from_account_number
-                - from_bank_id
+                - from_bank_name
                 - to_account_number
                 - amount
                 - description
@@ -464,8 +428,8 @@ paths:
                   type: string
                   description: Optional description for the transfer.
                 timestamp:
-                  type: string
-                  format: date-time
+                  type: number
+                  format: float
       responses:
         '200':
           description: Notification accepted
