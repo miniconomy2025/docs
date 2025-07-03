@@ -8,16 +8,18 @@ The Commercial Bank API facilitates financial transactions and loan management f
 It serves as the central hub for inter-company payments and provides essential lending services.
 
 ### Authentication
-All entities will be given their unique secret API key before the simulation starts, which allows us to prove their uniqueness as an account holder.
+Entities will be authenticated by their signed certificate, which is automatically mapped to their unique bank account.
+
+### Timestamps
+Timestamps are returned in simulation-time (number of 'days' since start of simulation, where 1 day = 2 mins real-time)
 
 ### High-level API specification
 > (See bottom of page for Swagger docs)
 
 - **Accounts**
-  - ~~**POST** | Create account~~ (REMOVED in favour of pre-existing accounts)
-    - ~~Returns API key for further access~~
+  - **POST** | Create account
   - **POST** | Set notification URL for received transactions
-  - **GET** | Get account number for specific API key
+  - **GET** | Get your account number
   - **GET** | Check account balance
   - **GET** | Check account frozen status
   - **GET** | Check outstanding loans due
@@ -64,5 +66,5 @@ All entities will be given their unique secret API key before the simulation sta
     - As such, when another bank wants to transfer money to us, they must initiate an inter-bank transfer themselves
     - Likewise, a similar system will be used when we want to transfer our own funds externally
     - The Hand of Hḗphaistos will also be registered in the `banks` table as its own bank.
-      - It may send money to our account in the same way as any other bank & requires its own bank API key.
+      - It may send money to our account in the same way as any other bank.
   - **POST** | Transfer money from foreign bank account to a local bank account

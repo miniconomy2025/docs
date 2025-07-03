@@ -260,6 +260,18 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Electronic'
+                
+    get:
+      tags: [Electronics]
+      summary: Get the details of our electronic units
+      description: Get how many units we have and how much per unit
+      responses:
+        200:
+          description: Details of our electronics
+          content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ElectronicsDetails'
 
   /electronics/orders:
     get:
@@ -483,3 +495,11 @@ components:
                 format: date
               produced:
                 type: integer
+    
+    ElectronicsDetails:
+      type: object
+      properties:
+        stock:
+          type: integer
+        pricePerUnit:
+          type: number
