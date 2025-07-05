@@ -7,6 +7,7 @@ paths:
     post:
       tags:
         - AccountEndpoints
+      summary: Create Transactional Account
       description: "Create a transactional account. Transactional \r\naccounts have an account number consisting of 12 \r\ndigits starting with `1000`."
       requestBody:
         content:
@@ -21,10 +22,42 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/CreateAccountResponse'
+    get:
+      tags:
+        - AccountEndpoints
+      summary: Get All Accounts
+      description: "Lookup all accounts by account type in order of newest to oldest.\r\n`next` will contain the URL for the next batch of\r\naccounts, or it will be `null` if no accounts were returned.\r\n\r\nNotable accounts:\r\n- Retail Bank Main Account: `1000`\r\n- Owners Equity Account: `1001`\r\n- Interest Income Account: `1002`\r\n- Loan Control Account: `1003`\r\n- Bad Debts Account: `1004`\r\n- Commercial Bank: `2000`"
+      parameters:
+        - name: accountType
+          in: query
+          schema:
+            $ref: '#/components/schemas/LedgerAccountCode'
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            format: int32
+            default: 25
+        - name: timestampMax
+          in: query
+          schema:
+            type: integer
+            format: int64
+            default: 0
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AccountDto'
   '/accounts/{id}':
     get:
       tags:
         - AccountEndpoints
+      summary: Get An Account
       description: "Get information about any account.\r\n\r\nNotable accounts:\r\n- Retail Bank Main Account: `1000`\r\n- Owners Equity Account: `1001`\r\n- Interest Income Account: `1002`\r\n- Loan Control Account: `1003`\r\n- Bad Debts Account: `1004`\r\n- Commercial Bank: `2000`"
       parameters:
         - name: id
@@ -39,13 +72,14 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/LedgerAccount'
+                $ref: '#/components/schemas/AccountDto'
         '404':
           description: Not Found
   '/accounts/{id}/transfers':
     get:
       tags:
         - AccountEndpoints
+      summary: Get An Account's Transfers
       description: "Get all transfers credited/debited to an account,\r\nreturns empty array if account does not exist.\r\n`next` will contain the URL for the next batch of\r\ntranfers, or it will be `null` if no transfers were returned."
       parameters:
         - name: id
@@ -76,11 +110,12 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TransferEventCursorPagination'
+                $ref: '#/components/schemas/TransferDtoCursorPagination'
   /loans:
     post:
       tags:
         - LoanEndpoints
+      summary: Issue a Loan to a Transactional Account
       description: "Create a loan account of the requested amount,\r\nand deposit the principal amount into the debtor's\r\naccount. Each month, interest will be added to the\r\nto the loan account, and an installment will be\r\ntranferred from the debtor's account to the loan\r\naccount. The loan will pay itself off after 60 months."
       requestBody:
         content:
@@ -99,9 +134,10 @@ paths:
     post:
       tags:
         - SimulationEndpoints
+      summary: Start Simulation
       responses:
-        '200':
-          description: OK
+        '204':
+          description: No Content
         '400':
           description: Bad Request
           content:
@@ -111,13 +147,15 @@ paths:
     delete:
       tags:
         - SimulationEndpoints
+      summary: Reset Simulation
       responses:
-        '200':
-          description: OK
+        '202':
+          description: Accepted
   /transfers:
     post:
       tags:
         - TransferEndpoints
+      summary: Transfer
       description: "Transfer money between accounts. Debiting account\r\n`from` and crediting account `to`. This can be used \r\nfor transfers between retail bank accounts, and \r\nfor transfers to the commercial bank. Retail bank \r\naccount numbers start with `1000`, while commercial \r\nbank account numbers start with `2000`."
       requestBody:
         content:
@@ -126,8 +164,12 @@ paths:
               $ref: '#/components/schemas/CreateTransferRequest'
         required: true
       responses:
-        '201':
-          description: Created
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateTransferResponse'
         '400':
           description: Bad Request
           content:
@@ -143,6 +185,7 @@ paths:
     get:
       tags:
         - TransferEndpoints
+      summary: Get All Transfers
       description: "Get all transfers. `next` will contain the URL for\r\nthe next batch of tranfers, or it will be `null` if\r\nno transfers were returned."
       parameters:
         - name: limit
@@ -163,11 +206,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TransferEventCursorPagination'
+                $ref: '#/components/schemas/TransferDtoCursorPagination'
   '/transfers/{id}':
     get:
       tags:
         - TransferEndpoints
+      summary: Get A Transfer
+      description: Get information about a transfer.
       parameters:
         - name: id
           in: path
@@ -180,7 +225,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TransferEvent'
+                $ref: '#/components/schemas/TransferDto'
         '404':
           description: Not Found
           content:
@@ -189,49 +234,12 @@ paths:
                 $ref: '#/components/schemas/ProblemDetails'
 components:
   schemas:
-    CreateAccountResponse:
-      type: object
-      properties:
-        accountId:
-          type: integer
-          format: int64
-      additionalProperties: false
-    CreateLoanAccountRequest:
-      type: object
-      properties:
-        loanAmountCents:
-          type: integer
-          format: int64
-        debtorAccountNumber:
-          type: integer
-          format: int64
-      additionalProperties: false
-    CreateTransactionAccountRequest:
-      type: object
-      properties:
-        salaryCents:
-          type: integer
-          format: int64
-      additionalProperties: false
-    CreateTransferRequest:
-      type: object
-      properties:
-        from:
-          type: integer
-          format: int64
-        to:
-          type: integer
-          format: int64
-        amountCents:
-          type: integer
-          format: int128
-      additionalProperties: false
-    LedgerAccount:
+    AccountDto:
       type: object
       properties:
         id:
-          type: integer
-          format: int128
+          type: string
+          nullable: true
         accountType:
           $ref: '#/components/schemas/LedgerAccountCode'
         debitsPending:
@@ -249,15 +257,65 @@ components:
         balancePending:
           type: integer
           format: int128
-          readOnly: true
         balancePosted:
           type: integer
           format: int128
-          readOnly: true
+        closed:
+          type: boolean
+        createdAt:
+          type: integer
+          format: int64
+      additionalProperties: false
+    CreateAccountResponse:
+      type: object
+      properties:
+        accountId:
+          type: string
+          nullable: true
+      additionalProperties: false
+    CreateLoanAccountRequest:
+      type: object
+      properties:
+        loanAmountCents:
+          type: integer
+          format: int64
+        debtorAccountNumber:
+          type: string
+          nullable: true
+      additionalProperties: false
+    CreateTransactionAccountRequest:
+      type: object
+      properties:
+        salaryCents:
+          type: integer
+          format: int64
+      additionalProperties: false
+    CreateTransferRequest:
+      type: object
+      properties:
+        from:
+          type: string
+          nullable: true
+        to:
+          type: string
+          nullable: true
+        amountCents:
+          type: integer
+          format: int128
+        reference:
+          type: integer
+          format: int64
+          nullable: true
+      additionalProperties: false
+    CreateTransferResponse:
+      type: object
+      properties:
+        transactionId:
+          type: string
+          nullable: true
       additionalProperties: false
     LedgerAccountCode:
       enum:
-        - Bank
         - Internal
         - Transactional
         - Loan
@@ -282,7 +340,7 @@ components:
           type: string
           nullable: true
       additionalProperties: {}
-    TransferEvent:
+    TransferDto:
       type: object
       properties:
         transactionId:
@@ -304,34 +362,37 @@ components:
           type: integer
           format: int64
         eventType:
-          $ref: '#/components/schemas/TransferEventType'
+          $ref: '#/components/schemas/TransferKind'
+        reference:
+          type: integer
+          format: int64
+          nullable: true
       additionalProperties: false
-    TransferEventCursorPagination:
+    TransferDtoCursorPagination:
       type: object
       properties:
         items:
           type: array
           items:
-            $ref: '#/components/schemas/TransferEvent'
+            $ref: '#/components/schemas/TransferDto'
           nullable: true
         next:
           type: string
           nullable: true
       additionalProperties: false
-    TransferEventType:
+    TransferKind:
       enum:
         - Transfer
         - StartTransfer
         - CompleteTransfer
         - CancelTransfer
-        - ClosingCredit
-        - ClosingDebit
-        - ReopenCredit
-        - ReopenDebit
+        - BalanceDebit
+        - BalanceCredit
+        - CloseDebit
+        - CloseCredit
       type: string
     TransferSide:
       enum:
         - Debit
         - Credit
-        - Any
       type: string
