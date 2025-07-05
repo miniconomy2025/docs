@@ -1,0 +1,169 @@
+openapi: 3.0.0
+info:
+  title: Express API
+  version: 1.0.0
+  description: API for managing pickup requests and other resources. Keep in mind that at the time, we are using id's as input parameters. In future, we expect to use the sub within your certificate for operations involving your identity. Additionally, we will expect company names in their kebab case format on the github repos (bulk-logistics, case-supplier, etc)
+servers:
+  - url: http://localhost:3000
+    description: Local development server
+tags:
+  - name: Pickup Requests
+    description: Operations related to pickup requests
+
+paths:
+  /api/pickup-request:
+    post:
+      tags:
+        - Pickup Requests
+      summary: Create a new pickup request
+      description: Submits the details for a new pickup request and returns payment information.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PickupRequestRequest'
+      responses:
+        '201':
+          description: Pickup request created successfully. Awaiting payment.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PickupRequestCreateResponse'
+        '400':
+          description: Invalid input data provided.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: Too many requests.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/pickup-request/{id}:
+    get:
+      tags:
+        - Pickup Requests
+      summary: Get a single pickup request
+      description: Retrieves the details and status of a specific pickup request by its ID.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+          description: Numeric ID of the pickup request to retrieve.
+      responses:
+        '200':
+          description: Successful retrieval of pickup request details.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetPickupRequestResponse'
+        '404':
+          description: No pickup request found with the provided ID.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: Too many requests.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/pickup-request/company/{companyId}:
+    get:
+      tags:
+        - Pickup Requests
+      summary: Get all pickup requests for a company
+      description: Retrieves a list of all pickup requests associated with a specific company ID.
+      parameters:
+        - in: path
+          name: companyId
+          required: true
+          schema:
+            type: string
+          description: ID of the company to retrieve pickup requests for.
+      responses:
+        '200':
+          description: A list of pickup requests for the specified company.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/GetPickupRequestResponse'
+        '429':
+          description: Too many requests.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    PickupRequestRequest:
+      type: object
+      required:
+        - originalExternalOrderId
+        - originCompanyId
+        - destinationCompanyId
+        - items
+      properties:
+        originalExternalOrderId:
+          type: string
+        originCompanyId:
+          type: string
+        destinationCompanyId:
+          type: string
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ItemRequest'
+    ItemRequest:
+      type: object
+      description: Represents an item in the pickup request. (Details can be added)
+    PickupRequestCreateResponse:
+      type: object
+      properties:
+        pickupRequestId:
+          type: integer
+        cost:
+          type: number
+        paymentReferenceId:
+          type: string
+        bulkLogisticsBankAccountNumber:
+          type: string
+          description: Can be a string or number.
+        status:
+          type: string
+        statusCheckUrl:
+          type: string
+    GetPickupRequestResponse:
+      type: object
+      properties:
+        pickupRequestId:
+          type: integer
+        cost:
+          type: number
+        status:
+          type: string
+        originCompanyName:
+          type: string
+        originalExternalOrderId:
+          type: string
+        requestDate:
+          type: string
+          format: date-time
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ItemRequest'
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
