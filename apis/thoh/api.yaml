@@ -9,28 +9,6 @@ servers:
     description: Local server
 
 paths:
-  /simulation:
-    post:
-      summary: Start a new simulation
-      tags: [Simulation]
-      responses:
-        '201':
-          description: Simulation started successfully
-        '400':
-          description: Missing required fields
-        '500':
-          description: Failed to start simulation
-
-  /simulation/people:
-    get:
-      summary: Get people and their salaries
-      tags: [Simulation]
-      responses:
-        '200':
-          description: People state
-        '500':
-          description: Error
-
   /simulation/unix-epoch-start-time:
     get:
       summary: Get current simulation date (epoch)
@@ -102,6 +80,15 @@ paths:
                     type: number
                   machineDetails:
                     type: object
+                    properties:
+                      requiredMaterials:
+                        type: string
+                      materialRatio:
+                        type: string
+                        example: "1:2:5"
+                      productionRate:
+                        type: integer
+                        example: 100
                   bankAccount:
                     type: string
         '400':
