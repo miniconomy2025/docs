@@ -1,0 +1,349 @@
+openapi: 3.0.3
+info:
+  title: THoH Simulation API
+  version: 1.0.0
+  description: |
+    A simulation API for managing markets, machines, vehicles, and raw materials with PostgreSQL persistence.
+servers:
+  - url: n/a
+    description: Local server
+
+paths:
+  /simulation:
+    post:
+      summary: Start a new simulation
+      tags: [Simulation]
+      responses:
+        '201':
+          description: Simulation started successfully
+        '400':
+          description: Missing required fields
+        '500':
+          description: Failed to start simulation
+
+  /simulation/people:
+    get:
+      summary: Get people and their salaries
+      tags: [Simulation]
+      responses:
+        '200':
+          description: People state
+        '500':
+          description: Error
+
+  /simulation/unix-epoch-start-time:
+    get:
+      summary: Get current simulation date (epoch)
+      tags: [Simulation]
+      responses:
+        '200':
+          description: Simulation date
+          content:
+            application/json:
+              schema:
+                type: string
+                example: '123455667889'
+        '500':
+          description: Error
+
+  /simulation/current-simulation-time:
+    get:
+      summary: Get current simulation date (formatted)
+      tags: [Simulation]
+      responses:
+        '200':
+          description: Simulation date
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  date:
+                    type: string
+                    example: '23/08/2025'
+                  time:
+                    type: string
+                    example: '12:00:00'
+        '500':
+          description: Error
+
+  /simulation/purchase-machine:
+    post:
+      summary: Buy a machine
+      tags: [Market]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                machineName:
+                  type: string
+                quantity:
+                  type: integer
+      responses:
+        '200':
+          description: Machine purchased
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  orderId:
+                    type: integer
+                  machineName:
+                    type: string
+                  quantity:
+                    type: integer
+                  price:
+                    type: number
+                  weight:
+                    type: number
+                  machineDetails:
+                    type: object
+                  bankAccount:
+                    type: string
+        '400':
+          description: Invalid request
+        '500':
+          description: Error
+
+  /simulation/purchase-truck:
+    post:
+      summary: Buy a truck
+      tags: [Market]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                truckName:
+                  type: string
+                quantity:
+                  type: integer
+      responses:
+        '200':
+          description: Vehicle purchased
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  orderId:
+                    type: integer
+                  truckName:
+                    type: string
+                  price:
+                    type: number
+                  maximumLoad:
+                    type: integer
+                  operatingCostPerDay:
+                    type: string
+                    example: D5000/day
+                  bankAccount:
+                    type: string
+        '400':
+          description: Error
+        '404':
+          description: Market not found
+
+  /simulation/purchase-raw-material:
+    post:
+      summary: Buy a raw material
+      tags: [Market]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                materialName:
+                  type: string
+                weightQuantity:
+                  type: number
+      responses:
+        '200':
+          description: Raw material purchased
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  orderId:
+                    type: integer
+                  materialName:
+                    type: string
+                  weightQuantity:
+                    type: number
+                  price:
+                    type: number
+                  bankAccount:
+                    type: string
+        '400':
+          description: Error
+        '404':
+          description: Raw materials market not found
+
+  /simulation/machines:
+    get:
+      summary: Get all machines for sale
+      tags: [Market]
+      responses:
+        '200':
+          description: List of machines
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  machines:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        machineName:
+                          type: string
+                        quantity:
+                          type: integer
+                        materialRatio:
+                          type: string
+                          example: 1:1:6
+                        productionRate:
+                          type: integer
+                          example: 500
+        '404':
+          description: Machines not found
+
+  /simulation/trucks:
+    get:
+      summary: Get all trucks for sale
+      tags: [Market]
+      responses:
+        '200':
+          description: List of trucks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    truckName:
+                      type: string
+                    price:
+                      type: number
+                    quantity:
+                      type: integer
+                    operatingCost:
+                      type: number
+                    maximumLoad:
+                      type: number
+        '404':
+          description: trucks market not found
+
+  /simulation/raw-materials:
+    get:
+      summary: Get all raw materials
+      tags: [Market]
+      responses:
+        '200':
+          description: List of raw materials
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    rawMaterialName:
+                      type: string
+                    pricePerKg:
+                      type: number
+                    quantityAvailable:
+                      type: integer
+        '404':
+          description: Raw materials market not found
+
+components:
+  schemas:
+    Machine:
+      type: object
+      properties:
+        machineName:
+          type: string
+        quantity:
+          type: integer
+        materialRatio:
+          type: string
+          example: 1:1:6
+        productionRate:
+          type: integer
+          example: 500
+    MachinePurchaseResponse:
+      type: object
+      properties:
+        orderId:
+          type: integer
+        machineName:
+          type: string
+        quantity:
+          type: integer
+        price:
+          type: number
+        weight:
+          type: number
+        machineDetails:
+          type: object
+    Vehicle:
+      type: object
+      properties:
+        truckName:
+          type: string
+        price:
+          type: number
+        quantity:
+          type: integer
+        operatingCost:
+          type: number
+        maximumLoad:
+          type: number
+    VehiclePurchaseResponse:
+      type: object
+      properties:
+        orderId:
+          type: integer
+        truckName:
+          type: string
+        price:
+          type: number
+        maximumLoad:
+          type: integer
+        operatingCostPerDay:
+          type: string
+          example: D5000/day
+    RawMaterial:
+      type: object
+      properties:
+        rawMaterialName:
+          type: string
+        pricePerKg:
+          type: number
+        quantityAvailable:
+          type: integer
+    RawMaterialPurchaseResponse:
+      type: object
+      properties:
+        orderId:
+          type: integer
+        materialName:
+          type: string
+        weightQuantity:
+          type: number
+        price:
+          type: number
+        bankAccount:
+          type: string 
