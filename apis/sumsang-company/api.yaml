@@ -1,0 +1,165 @@
+openapi: 3.0.3
+info:
+  title: SumSang Phones API
+  version: 1.0.0
+  description: |
+    Public endpoints used for communication to SumSang Phones
+
+servers:
+  - url: https://localhost:8080/public-api
+
+components:
+  schemas:
+    Order:
+      type: object
+      required:
+        - items
+      properties:
+        items:
+          type: array
+          items:
+            type: object
+            required: 
+              - phoneId
+              - quantity
+            properties:
+              phoneId: 
+                type: number
+              quantity: 
+                type: number
+
+    Stock:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            type: object
+            required: 
+              - phoneId
+              - name
+              - quantity
+              - price
+            properties:
+              phoneId: 
+                type: number
+              name:
+                type: string
+              quantity: 
+                type: number
+              price:
+                type: number
+                format: float
+
+
+
+paths:
+  /simulations:
+    post:
+      summary: Start a new simulation
+      responses:
+        '200':
+          description: Simulation started
+          
+  /stock:
+    get:
+      summary: Get current phone stock
+      responses:
+        '200':
+          description: List of phones with stock availability and price per phone
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Stock'
+                      
+  /orders:
+    post:
+      summary: Make an order for phones
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Order'
+      responses:
+        '201':
+          description: Order placed successfully. Items reserved for 24 hours awaiting payment.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - orderId
+                  - price
+                  - accountNumber
+                properties:
+                  orderId:
+                    type: number
+                    description: Reference number to use for payment
+                  price:
+                    type: number
+                    format: float
+                    description: Total price of the order
+                  accountNumber:
+                    type: string
+                    example: "123456789012"
+                    description: Bank account number for SumSang phones
+        '400':
+          description: Invalid order data
+
+  /pop:
+    post:
+      summary: Notify that payment has been made to SumSang phones
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - reference
+                - amount
+              properties:
+                reference:
+                  type: number
+                  description: Order id
+                amount:
+                  type: number
+                  format: float
+                  description: Payment amount
+      responses:
+        '200':
+          description: Payment accepted
+        '400':
+          description: Invalid payment data
+
+
+  /logistics:
+    post:
+      summary: Confirm delivery or pickup
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - id
+                - type
+                - quantity
+              properties:
+                id:
+                  type: number
+                  description: orderId or pickuprequestId
+                type:
+                  type: string
+                  description: PICKUP/DELIVERY
+                  example: PICKUP/DELIVERY
+                quantity:
+                  type: number
+                  description: The amount being picked up or being delivered
+      responses:
+        '200':
+          description: Delivery request accepted
+        '400':
+          description: Invalid delivery data
