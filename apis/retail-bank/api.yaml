@@ -31,7 +31,7 @@ paths:
         - name: accountType
           in: query
           schema:
-            $ref: '#/components/schemas/LedgerAccountCode'
+            $ref: '#/components/schemas/LedgerAccountType'
         - name: limit
           in: query
           schema:
@@ -241,7 +241,7 @@ components:
           type: string
           nullable: true
         accountType:
-          $ref: '#/components/schemas/LedgerAccountCode'
+          $ref: '#/components/schemas/LedgerAccountType'
         debitsPending:
           type: integer
           format: int128
@@ -279,7 +279,7 @@ components:
         loanAmountCents:
           type: integer
           format: int64
-        debtorAccountNumber:
+        debtorAccountId:
           type: string
           nullable: true
       additionalProperties: false
@@ -310,11 +310,11 @@ components:
     CreateTransferResponse:
       type: object
       properties:
-        transactionId:
+        transferId:
           type: string
           nullable: true
       additionalProperties: false
-    LedgerAccountCode:
+    LedgerAccountType:
       enum:
         - Internal
         - Transactional
@@ -340,29 +340,40 @@ components:
           type: string
           nullable: true
       additionalProperties: {}
+    TransferAction:
+      enum:
+        - Transfer
+        - StartTransfer
+        - CompleteTransfer
+        - CancelTransfer
+        - BalanceDebit
+        - BalanceCredit
+        - CloseDebit
+        - CloseCredit
+      type: string
     TransferDto:
       type: object
       properties:
-        transactionId:
+        transferId:
           type: string
           nullable: true
-        debitAccountNumber:
-          type: integer
-          format: int128
-        creditAccountNumber:
-          type: integer
-          format: int128
+        debitAccountId:
+          type: string
+          nullable: true
+        creditAccountId:
+          type: string
+          nullable: true
         amount:
           type: integer
           format: int128
-        pendingId:
+        parentId:
           type: string
           nullable: true
         timestamp:
           type: integer
           format: int64
         eventType:
-          $ref: '#/components/schemas/TransferKind'
+          $ref: '#/components/schemas/TransferAction'
         reference:
           type: integer
           format: int64
@@ -380,17 +391,6 @@ components:
           type: string
           nullable: true
       additionalProperties: false
-    TransferKind:
-      enum:
-        - Transfer
-        - StartTransfer
-        - CompleteTransfer
-        - CancelTransfer
-        - BalanceDebit
-        - BalanceCredit
-        - CloseDebit
-        - CloseCredit
-      type: string
     TransferSide:
       enum:
         - Debit
