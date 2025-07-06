@@ -340,23 +340,14 @@ components:
           type: string
           nullable: true
       additionalProperties: {}
-    TransferAction:
-      enum:
-        - Transfer
-        - StartTransfer
-        - CompleteTransfer
-        - CancelTransfer
-        - BalanceDebit
-        - BalanceCredit
-        - CloseDebit
-        - CloseCredit
-      type: string
     TransferDto:
       type: object
       properties:
         transferId:
           type: string
           nullable: true
+        transferType:
+          $ref: '#/components/schemas/TransferType'
         debitAccountId:
           type: string
           nullable: true
@@ -372,8 +363,6 @@ components:
         timestamp:
           type: integer
           format: int64
-        eventType:
-          $ref: '#/components/schemas/TransferAction'
         reference:
           type: integer
           format: int64
@@ -395,4 +384,15 @@ components:
       enum:
         - Debit
         - Credit
+      type: string
+    TransferType:
+      enum:
+        - Transfer
+        - StartTransfer
+        - CompleteTransfer
+        - CancelTransfer
+        - BalanceDebit
+        - BalanceCredit
+        - CloseDebit
+        - CloseCredit
       type: string
