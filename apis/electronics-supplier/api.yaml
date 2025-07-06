@@ -12,6 +12,8 @@ tags:
     description: Get details of electronics
   - name: Orders
     description: Order electronics and get the details of the order
+  - name: Logistics
+    description: For Bulk Logistics integration
 
 paths:
   /electronics:
@@ -63,6 +65,59 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ElectronicsOrder'
+  
+  /logistics:
+    post:
+      tags: [Logistics]
+      summary: Handle logistics requests for material delivery or electronics pickup
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                id:
+                  type: string
+                  description: Order ID (for delivery) or pickup request ID (for pickup)
+                  example: "123"
+                type:
+                  type: string
+                  description: Type of logistics operation ("PICKUP" or "DELIVERY")
+                  enum: ["PICKUP", "DELIVERY"]
+                  example: "DELIVERY"
+                quantity:
+                  type: integer
+                  description: Number of items to deliver or pick up
+                  example: 10
+              required:
+                - id
+                - type
+                - quantity
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  remaining:
+                    type: integer
+        '400':
+          description: Bad request (validation or business logic error)
+          content:
+            application/json:
+              schema:
+                type: string
+        '404':
+          description: Not found (order not found)
+          content:
+            application/json:
+              schema:
+                type: string
 
 
 components:
