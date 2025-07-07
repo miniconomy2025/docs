@@ -6,7 +6,7 @@ info:
     Public endpoints used for communication to Pear Phones Company
 
 servers:
-  - url: https://localhost:8080/public-api
+  - url: http://pear-company-api.projects.bbdgrad.com
 
 components:
   schemas:
