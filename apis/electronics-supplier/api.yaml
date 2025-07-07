@@ -1,266 +1,22 @@
 openapi: 3.0.3
 info:
-  title: Electronics Manufacturing API
+  title: Electronics Supplier API
   version: 1.0.0
-  description: API for managing machines, materials, supplies, and electronics production for a phone manufacturing supply chain.
+  description: API for getting stock, prices, and making orders for our Electronics.
 
 servers:
   - url: http://localhost:8080
 
 tags:
-  - name: Machines
-    description: Manage machines and machine orders
-  - name: Materials
-    description: Manage materials, suppliers, and material orders
-  - name: Supplies
-    description: Track supply deliveries and usage
   - name: Electronics
-    description: Produce and manage electronics and electronics orders
-  - name: Reports
-    description: Generate reports for production and analytics
-  - name: Inventory
-    description: Monitor inventory levels across the system
+    description: Get details of electronics
+  - name: Orders
+    description: Order electronics and get the details of the order
+  - name: Logistics
+    description: For Bulk Logistics integration
 
 paths:
-
-  /machines:
-    get:
-      tags: [Machines]
-      summary: List all machines
-      responses:
-        200:
-          description: A list of machines
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Machine'
-    post:
-      tags: [Machines]
-      summary: Create a new machine
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Machine'
-      responses:
-        201:
-          description: Machine created
-
-  /machines/{machineId}:
-    get:
-      tags: [Machines]
-      summary: Get a specific machine
-      parameters:
-        - in: path
-          name: machineId
-          required: true
-          schema:
-            type: integer
-      responses:
-        200:
-          description: Machine details
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Machine'
-    put:
-      tags: [Machines]
-      summary: Update a specific machine
-      parameters:
-        - in: path
-          name: machineId
-          required: true
-          schema:
-            type: integer
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Machine'
-      responses:
-        200:
-          description: Machine updated
-    delete:
-      tags: [Machines]
-      summary: Delete a machine
-      parameters:
-        - in: path
-          name: machineId
-          required: true
-          schema:
-            type: integer
-      responses:
-        204:
-          description: Machine deleted
-
-  /machines/orders:
-    post:
-      tags: [Machines]
-      summary: Create a machine order
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/MachineOrder'
-      responses:
-        201:
-          description: Machine order created
-    get:
-      tags: [Machines]
-      summary: List machine orders
-      responses:
-        200:
-          description: List of machine orders
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/MachineOrder'
-
-  /materials/orders:
-    get:
-      tags: [Materials]
-      summary: List material orders
-      responses:
-        200:
-          description: List of material orders
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/MaterialOrder'
-    post:
-      tags: [Materials]
-      summary: Create a material order
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/MaterialOrder'
-      responses:
-        201:
-          description: Material order created
-
-  /materials/orders/{orderId}:
-    get:
-      tags: [Materials]
-      summary: Get a specific material order
-      parameters:
-        - in: path
-          name: orderId
-          required: true
-          schema:
-            type: integer
-      responses:
-        200:
-          description: Material order details
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/MaterialOrder'
-    put:
-      tags: [Materials]
-      summary: Update a material order
-      parameters:
-        - in: path
-          name: orderId
-          required: true
-          schema:
-            type: integer
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/MaterialOrder'
-      responses:
-        200:
-          description: Material order updated
-
-  /supplies:
-    get:
-      tags: [Supplies]
-      summary: List all supplies
-      responses:
-        200:
-          description: List of supplies
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Supply'
-    post:
-      tags: [Supplies]
-      summary: Add a supply
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Supply'
-      responses:
-        201:
-          description: Supply created
-    delete:
-      tags: [Supplies]
-      summary: Delete all supplies (or filter by material)
-      responses:
-        204:
-          description: Supplies deleted
-
-  /supplies/{materialId}:
-    get:
-      tags: [Supplies]
-      summary: Get all supplies for a material
-      parameters:
-        - in: path
-          name: materialId
-          required: true
-          schema:
-            type: integer
-      responses:
-        200:
-          description: Supplies for given material
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Supply'
-
   /electronics:
-    post:
-      tags: [Electronics]
-      summary: Produce a new electronic device
-      description: Consumes available supplies and creates a new electronic device record.
-      requestBody:
-        description: Optional production input (e.g. machine used, notes)
-        required: false
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                machine_id:
-                  type: integer
-                notes:
-                  type: string
-      responses:
-        201:
-          description: Electronic device produced
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Electronic'
-                
     get:
       tags: [Electronics]
       summary: Get the details of our electronic units
@@ -273,35 +29,28 @@ paths:
                 schema:
                   $ref: '#/components/schemas/ElectronicsDetails'
 
-  /electronics/orders:
-    get:
-      tags: [Electronics]
-      summary: List electronics orders
-      responses:
-        200:
-          description: List of electronics orders
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/ElectronicsOrder'
+  /orders:
     post:
-      tags: [Electronics]
+      tags: [Orders]
       summary: Create a new electronics order
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ElectronicsOrder'
+              $ref: '#/components/schemas/ElectronicsOrderRequest'
       responses:
         201:
           description: Electronics order created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ElectronicsOrderResponse'
+              
 
-  /electronics/orders/{orderId}:
+  /orders/{orderId}:
     get:
-      tags: [Electronics]
+      tags: [Orders]
       summary: Get an electronics order
       parameters:
         - in: path
@@ -316,190 +65,112 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ElectronicsOrder'
-    put:
-      tags: [Electronics]
-      summary: Update electronics order
-      parameters:
-        - in: path
-          name: orderId
-          required: true
-          schema:
-            type: integer
+  
+  /logistics:
+    post:
+      tags: [Logistics]
+      summary: Handle logistics requests for material delivery or electronics pickup
       requestBody:
+        required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ElectronicsOrder'
+              type: object
+              properties:
+                id:
+                  type: string
+                  description: Order ID (for delivery) or pickup request ID (for pickup)
+                  example: "123"
+                type:
+                  type: string
+                  description: Type of logistics operation ("PICKUP" or "DELIVERY")
+                  enum: ["PICKUP", "DELIVERY"]
+                  example: "DELIVERY"
+                quantity:
+                  type: integer
+                  description: Number of items to deliver or pick up
+                  example: 10
+              required:
+                - id
+                - type
+                - quantity
       responses:
-        200:
-          description: Electronics order updated
-  /inventory:
-    get:
-      tags: [Inventory]
-      summary: Get current inventory summary
-      description: Returns summary of machines, materials, supplies, and electronics in stock.
-      responses:
-        200:
-          description: Inventory summary
+        '200':
+          description: Success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/InventorySummary'
+                type: object
+                properties:
+                  message:
+                    type: string
+                  remaining:
+                    type: integer
+        '400':
+          description: Bad request (validation or business logic error)
+          content:
+            application/json:
+              schema:
+                type: string
+        '404':
+          description: Not found (order not found)
+          content:
+            application/json:
+              schema:
+                type: string
 
-  /reports/production:
-    get:
-      tags: [Reports]
-      summary: Get production report
-      description: Returns a summary of electronics produced during a date range.
-      parameters:
-        - in: query
-          name: start_date
-          schema:
-            type: string
-            format: date
-        - in: query
-          name: end_date
-          schema:
-            type: string
-            format: date
-      responses:
-        200:
-          description: Production report
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ProductionReport'
 
 components:
   schemas:
-
-    Machine:
+    ElectronicsOrderRequest:
       type: object
       properties:
-        machine_id:
+        quantity:
           type: integer
-        status:
-          type: string
-          enum: [WORKING, BROKEN]
-        purchase_price:
+          example: 1000
+    ElectronicsOrderResponse:
+      type: object
+      properties:
+        orderId:
+          type: integer
+          example: 5432
+          description: The order ID of your order
+        quantity:
+          type: integer
+          example: 1000
+          description: How many units of electronics you ordered
+        amountDue:
           type: number
-          format: float
-        purchased_at:
+          example: 5000
+          description: How much money you owe us
+        bankNumber:
           type: string
-          format: date-time
-
-    MachineOrder:
-      type: object
-      properties:
-        order_id:
-          type: integer
-        supplier_id:
-          type: integer
-        ordered_at:
-          type: string
-          format: date-time
-        received_at:
-          type: string
-          format: date-time
-
-    MaterialOrder:
-      type: object
-      properties:
-        order_id:
-          type: integer
-        supplier_id:
-          type: integer
-        ordered_at:
-          type: string
-          format: date-time
-        received_at:
-          type: string
-          format: date-time
-
-    Supply:
-      type: object
-      properties:
-        supply_id:
-          type: integer
-        material_id:
-          type: integer
-        received_at:
-          type: string
-          format: date-time
-        processed_at:
-          type: string
-          format: date-time
-
+          example: "123456123456"
+          description: "Our bank account number for you to pay us"
     ElectronicsOrder:
       type: object
       properties:
-        order_id:
+        orderId:
           type: integer
-        manufacturer_id:
-          type: integer
-        amount:
-          type: integer
-        ordered_at:
+          example: 5432
+        status:
           type: string
-          format: date-time
-        processed_at:
-          type: string
-          format: date-time
-
-    Electronic:
-        type: object
-        properties:
-          electronic_id:
-            type: integer
-          produced_at:
-            type: string
-            format: date-time
-          sold_at:
-            type: string
-            format: date-time
-          machine_id:
-            type: integer
-          notes:
-            type: string
-
-    InventorySummary:
-      type: object
-      properties:
-        total_machines:
+          example: "InTransit"
+        orderedAt:
+          type: number
+          example: 27
+        quantity:
           type: integer
-        total_materials:
-          type: integer
-        total_supplies:
-          type: integer
-        total_electronics:
-          type: integer
-
-    ProductionReport:
-      type: object
-      properties:
-        start_date:
-          type: string
-          format: date
-        end_date:
-          type: string
-          format: date
-        total_produced:
-          type: integer
-        breakdown_by_day:
-          type: array
-          items:
-            type: object
-            properties:
-              date:
-                type: string
-                format: date
-              produced:
-                type: integer
-    
+          example: 1000
+        remainingAmount:
+          type: number
+          example: 500
     ElectronicsDetails:
       type: object
       properties:
-        stock:
+        availableStock:
           type: integer
+          example: 2000
         pricePerUnit:
           type: number
+          example: 5.0
