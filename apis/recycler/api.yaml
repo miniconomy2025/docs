@@ -11,6 +11,8 @@ paths:
   /materials:
     get:
       summary: Get info on raw materials
+      tags:
+        - Materials
       description: Returns a list of raw materials currently available in the Recycler's inventory.
       responses:
         '200':
@@ -18,66 +20,33 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  materials:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        id:
-                          type: integer
-                        name:
-                          type: string
-                        available_quantity_in_kg:
-                          type: number
-                          format: float
-                        price:
-                          type: number
-                          format: float
+                type: array
+                items:
+                  $ref: '#/components/schemas/RawMaterialDto'
 
   /orders:
     post:
       summary: Create a raw materials order
-      description: Allows a supplier to create an order for specific raw materials.
+      tags:
+        - Orders
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                supplierId:
-                  type: integer
-                items:
-                  type: array
-                  items:
-                    type: object
-                    properties:
-                      materialId:
-                        type: integer
-                      quantity:
-                        type: number
-              required:
-                - supplierId
-                - items
+              $ref: '#/components/schemas/CreateOrderCommand'
       responses:
-        '201':
+        '200':
           description: Order created successfully
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  orderNumber:
-                    type: string
-                    format: uuid
-                  status:
-                    type: string
+                $ref: '#/components/schemas/Order'
 
     get:
       summary: View all orders
-      description: Retrieves a list of all orders submitted by a specific supplier.
+      tags:
+        - Orders
       responses:
         '200':
           description: List of orders with details
@@ -86,23 +55,13 @@ paths:
               schema:
                 type: array
                 items:
-                  type: object
-                  properties:
-                    orderNumber:
-                      type: string
-                      format: uuid
-                    supplierName:
-                      type: string
-                    createdAt:
-                      type: string
-                      format: date-time
-                    status:
-                      type: string
+                  $ref: '#/components/schemas/Order'
 
   /orders/{order_number}:
     get:
       summary: View specific order by order number
-      description: Retrieves a single order's details by its order number.
+      tags:
+        - Orders
       parameters:
         - name: order_number
           in: path
@@ -116,103 +75,171 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  orderNumber:
-                    type: string
-                    format: uuid
-                  supplierName:
-                    type: string
-                  createdAt:
-                    type: string
-                    format: date-time
-                  status:
-                    type: string
-                  items:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        material:
-                          type: string
-                        quantity:
-                          type: number
-                        price:
-                          type: number
+                $ref: '#/components/schemas/Order'
 
   /companies:
     post:
       summary: Create a company
-      description: Registers a new company with a defined role (e.g., Supplier, Recycler).
+      tags:
+        - Companies
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                name:
-                  type: string
-                roleId:
-                  type: integer
-              required:
-                - name
-                - roleId
+              $ref: '#/components/schemas/CreateCompanyCommand'
       responses:
         '201':
           description: Company created successfully
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  companyId:
-                    type: integer
-                  name:
-                    type: string
-                  role:
-                    type: string
+                $ref: '#/components/schemas/CreateCompanyResponse'
 
-  /pop:
-    patch:
-      summary: Submit Proof of Payment (POP)
-      description: Retrieves a POP document for a completed order.
+  /simulation:
+    post:
+      summary: Start simulation
+      tags:
+        - Simulation
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                orderId:
-                  type: integer
-              required:
-                - orderId
+              $ref: '#/components/schemas/StartSimulationCommand'
       responses:
         '200':
-          description: POP document retrieved
+          description: Simulation started
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  orderId:
-                    type: integer
-                  orderNumber:
-                    type: string
-                    format: uuid
-                  supplierName:
-                    type: string
-                  materials:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        material:
-                          type: string
-                        quantity:
-                          type: number
-                        price:
-                          type: number
-                  confirmationMessage:
-                    type: string
+                $ref: '#/components/schemas/StartSimulationResponse'
+
+  /api/Machines/receive:
+    post:
+      summary: Receive machine delivery
+      tags:
+        - Machines
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReceiveMachineCommand'
+      responses:
+        '201':
+          description: Machine received
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReceivedMachineDto'
+
+components:
+  schemas:
+
+    CreateOrderCommand:
+      type: object
+      required: [supplierId, orderItems]
+      properties:
+        supplierId:
+          type: integer
+        orderItems:
+          type: array
+          items:
+            $ref: '#/components/schemas/CreateOrderItemDto'
+
+    CreateOrderItemDto:
+      type: object
+      properties:
+        materialId:
+          type: integer
+        quantity:
+          type: integer
+
+    Order:
+      type: object
+      properties:
+        orderNumber:
+          type: string
+          format: uuid
+        supplierName:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        status:
+          type: string
+
+    CreateCompanyCommand:
+      type: object
+      properties:
+        name:
+          type: string
+        roleId:
+          type: integer
+
+    CreateCompanyResponse:
+      type: object
+      properties:
+        companyId:
+          type: integer
+        name:
+          type: string
+        role:
+          type: string
+
+    StartSimulationCommand:
+      type: object
+      properties:
+        startTime:
+          type: integer
+          format: int64
+          nullable: true
+
+    StartSimulationResponse:
+      type: object
+      properties:
+        status:
+          type: string
+        message:
+          type: string
+
+    RawMaterialDto:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        availableQuantityInKg:
+          type: number
+          format: double
+        pricePerKg:
+          type: number
+          format: double
+
+    ReceiveMachineCommand:
+      type: object
+      properties:
+        machineId:
+          type: integer
+
+    ReceivedMachineDto:
+      type: object
+      properties:
+        id:
+          type: integer
+        machineId:
+          type: integer
+        receivedAt:
+          type: string
+          format: date-time
+        status:
+          type: string
+
+tags:
+  - name: Orders
+  - name: Companies
+  - name: Simulation
+  - name: Materials
+  - name: Machines
