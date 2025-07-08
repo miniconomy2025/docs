@@ -5,7 +5,7 @@ info:
   description: API for getting stock, prices, and making orders for our Electronics.
 
 servers:
-  - url: http://localhost:8080
+  - url: http://electronics-supplier-api.projects.bbdgrad.com
 
 tags:
   - name: Electronics
