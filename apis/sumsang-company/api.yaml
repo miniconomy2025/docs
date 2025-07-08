@@ -1,12 +1,12 @@
 openapi: 3.0.3
 info:
-  title: Pear Phones API
+  title: SumSang Phones API
   version: 1.0.0
   description: |
-    Public endpoints used for communication to Pear Phones Company
+    Public endpoints used for communication to SumSang Phones
 
 servers:
-  - url: https://pear-company-api.projects.bbdgrad.com/public-api
+  - url: https://localhost:8080/public-api
 
 components:
   schemas:
@@ -20,10 +20,10 @@ components:
           items:
             type: object
             required: 
-              - phone_id
+              - phoneId
               - quantity
             properties:
-              phone_id: 
+              phoneId: 
                 type: number
               quantity: 
                 type: number
@@ -36,12 +36,12 @@ components:
           items:
             type: object
             required: 
-              - phone_id
+              - phoneId
               - name
               - quantity
               - price
             properties:
-              phone_id: 
+              phoneId: 
                 type: number
               name:
                 type: string
@@ -54,19 +54,12 @@ components:
 
 
 paths:
-  /simulation/start:
+  /simulations:
     post:
       summary: Start a new simulation
       responses:
         '200':
           description: Simulation started
-
-  /simulation/tick:
-    post:
-      summary: Progress simulation by one tick
-      responses:
-        '200':
-          description: Simulation tick processed
           
   /stock:
     get:
@@ -79,7 +72,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Stock'
                       
-  /order:
+  /orders:
     post:
       summary: Make an order for phones
       requestBody:
@@ -96,22 +89,27 @@ paths:
               schema:
                 type: object
                 required:
-                  - order_id
+                  - orderId
                   - price
+                  - accountNumber
                 properties:
-                  order_id:
+                  orderId:
                     type: number
                     description: Reference number to use for payment
                   price:
                     type: number
                     format: float
                     description: Total price of the order
+                  accountNumber:
+                    type: string
+                    example: "123456789012"
+                    description: Bank account number for SumSang phones
         '400':
           description: Invalid order data
 
-  /payment-made:
+  /pop:
     post:
-      summary: Notify that payment has been made to Pear phones
+      summary: Notify that payment has been made to SumSang phones
       requestBody:
         required: true
         content:
@@ -136,9 +134,9 @@ paths:
           description: Invalid payment data
 
 
-  /goods-delivered:
+  /logistics:
     post:
-      summary: Confirm delivery of bulk goods to Pear phones
+      summary: Confirm delivery or pickup
       requestBody:
         required: true
         content:
@@ -146,34 +144,22 @@ paths:
             schema:
               type: object
               required:
-                - delivery_reference
+                - id
+                - type
+                - quantity
               properties:
-                delivery_reference:
+                id:
                   type: number
-                  description: Delivery reference number
+                  description: orderId or pickuprequestId
+                type:
+                  type: string
+                  description: PICKUP/DELIVERY
+                  example: PICKUP/DELIVERY
+                quantity:
+                  type: number
+                  description: The amount being picked up or being delivered
       responses:
         '200':
-          description: Bulk delivery recorded
-        '400':
-          description: Invalid delivery data
-
-  /goods-collection:
-    post:
-      summary: Confirm consumer goods have been collected from Pear phones
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - delivery_reference
-              properties:
-                delivery_reference:
-                  type: number
-                  description: Delivery reference number
-      responses:
-        '200':
-          description: Consumer delivery recorded
+          description: Delivery request accepted
         '400':
           description: Invalid delivery data
