@@ -111,6 +111,28 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/TransferDtoCursorPagination'
+  '/accounts/{id}/loans':
+    get:
+      tags:
+        - AccountEndpoints
+      summary: Get An Account's Loans
+      description: "Get all loans to this account, returns empty array if\r\naccount does not exist."
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AccountDto'
   /loans:
     post:
       tags:
@@ -130,27 +152,34 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/CreateAccountResponse'
+  /report:
+    get:
+      tags:
+        - ReportingEndpoints
+      responses:
+        '200':
+          description: OK
   /simulation:
     post:
       tags:
         - SimulationEndpoints
       summary: Start Simulation
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StartSimulationRequest'
+        required: true
       responses:
         '204':
           description: No Content
-        '400':
-          description: Bad Request
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/ProblemDetails'
     delete:
       tags:
         - SimulationEndpoints
       summary: Reset Simulation
       responses:
-        '202':
-          description: Accepted
+        '204':
+          description: No Content
   /transfers:
     post:
       tags:
@@ -340,6 +369,13 @@ components:
           type: string
           nullable: true
       additionalProperties: {}
+    StartSimulationRequest:
+      type: object
+      properties:
+        unixEpochStartTime:
+          type: integer
+          format: int64
+      additionalProperties: false
     TransferDto:
       type: object
       properties:
