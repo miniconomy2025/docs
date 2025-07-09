@@ -47,16 +47,16 @@ paths:
             schema:
               type: object
               properties:
-                supplierId:
-                  type: integer
-                items:
+                companyName:
+                  type: string
+                orderItems:
                   type: array
                   items:
                     type: object
                     properties:
-                      materialId:
-                        type: integer
-                      quantity:
+                      rawMaterialName:
+                        type: string
+                      quantityInKg:
                         type: number
               required:
                 - supplierId
