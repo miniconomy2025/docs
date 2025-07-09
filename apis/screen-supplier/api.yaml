@@ -6,7 +6,7 @@ info:
   contact:
     name: Screen Supplier Service
 servers:
-  - url: https://TBD
+  - url: https://screen-supplier-api.projects.bbdgrad.com
 
 tags:
   - name: Screen
