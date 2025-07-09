@@ -69,35 +69,43 @@ paths:
               schema:
                 type: object
                 properties:
-                  orderNumber:
+                  data:
+                    $ref: '#/components/schemas/Order'
+                  isSuccess:
+                    type: boolean
+                  message:
                     type: string
-                    format: uuid
-                  status:
+                  timeStamp:
                     type: string
 
     get:
-      summary: View all orders
-      description: Retrieves a list of all orders submitted by a specific supplier.
+      summary: Get order by id
+      parameters:
+        - name: id
+          in: query
+          description: Filter orders by status name
+          required: true
+          schema:
+           type: integer
+
+      description: Retrieves order by it's id
       responses:
         '200':
-          description: List of orders with details
+          description: Order with details
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    orderNumber:
-                      type: string
-                      format: uuid
-                    supplierName:
-                      type: string
-                    createdAt:
-                      type: string
-                      format: date-time
-                    status:
-                      type: string
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Order'
+                  isSuccess:
+                    type: boolean
+                  message:
+                    type: string
+                  timeStamp:
+                    type: string
+                    format: date-time
 
   /orders/{order_number}:
     get:
@@ -118,27 +126,15 @@ paths:
               schema:
                 type: object
                 properties:
-                  orderNumber:
+                  data:
+                    $ref: '#/components/schemas/Order'
+                  isSuccess:
+                    type: boolean
+                  message:
                     type: string
-                    format: uuid
-                  supplierName:
-                    type: string
-                  createdAt:
+                  timeStamp:
                     type: string
                     format: date-time
-                  status:
-                    type: string
-                  items:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        material:
-                          type: string
-                        quantity:
-                          type: number
-                        price:
-                          type: number
 
   /companies:
     post:
@@ -216,3 +212,58 @@ paths:
                           type: number
                   confirmationMessage:
                     type: string
+
+components:
+  schemas:
+    Order:
+      type: object
+      properties:
+        orderId:
+          type: integer
+        orderNumber:
+          type: string
+          format: uuid
+        orderStatus:
+          $ref: '#/components/schemas/OrderStatus'
+        createdAt:
+          type: string
+          format: date-time
+        companyId:
+          type: integer
+        orderExpiresAt:
+          type: string
+          format: date-time
+        orderItems:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderItem'
+        accountNumber:
+          type: string
+
+    OrderStatus:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+
+    OrderItem:
+      type: object
+      properties:
+        rawMaterial:
+          $ref: '#/components/schemas/RawMaterial'
+        quantityInKg:
+          type: number
+        pricePerKg:
+          type: number
+
+    RawMaterial:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        pricePerKg:
+          type: number
