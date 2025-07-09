@@ -5,7 +5,7 @@ info:
   description: API for getting stock, prices, and making orders for our Electronics.
 
 servers:
-  - url: http://localhost:8080
+  - url: http://electronics-supplier-api.projects.bbdgrad.com
 
 tags:
   - name: Electronics
@@ -68,66 +68,191 @@ paths:
   
   /logistics:
     post:
+      summary: Handle a logistics delivery or pickup
       tags: [Logistics]
-      summary: Handle logistics requests for material delivery or electronics pickup
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                id:
-                  type: string
-                  description: Order ID (for delivery) or pickup request ID (for pickup)
-                  example: "123"
-                type:
-                  type: string
-                  description: Type of logistics operation ("PICKUP" or "DELIVERY")
-                  enum: ["PICKUP", "DELIVERY"]
-                  example: "DELIVERY"
-                quantity:
-                  type: integer
-                  description: Number of items to deliver or pick up
-                  example: 10
-              required:
-                - id
-                - type
-                - quantity
+              $ref: '#/components/schemas/LogisticsRequestDto'
       responses:
         '200':
-          description: Success
+          description: Success message and remaining quantity
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  message:
+                  Message:
                     type: string
-                  remaining:
+                    example: Delivered 5 machines for supplier ID 2 from order 123
+                  Remaining:
                     type: integer
+                    example: 0
         '400':
-          description: Bad request (validation or business logic error)
+          description: Invalid request or nothing to deliver/pick up
           content:
             application/json:
               schema:
                 type: string
         '404':
-          description: Not found (order not found)
+          description: Order not found
           content:
             application/json:
               schema:
                 type: string
 
+  /simulation:
+    post:
+      summary: Start the simulation
+      tags: [Simulation]
+      responses:
+        '200':
+          description: Simulation started
+    get:
+      summary: Get simulation state
+      tags: [Simulation]
+      responses:
+        '200':
+          description: Simulation state
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SimulationState'
+    delete:
+      summary: Stop the simulation
+      tags: [Simulation]
+      responses:
+        '200':
+          description: Simulation stopped
+  
+  /machines/failure:
+    post:
+      summary: Report a machine failure (disaster)
+      tags: [Machines]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MachineFailureDto'
+      responses:
+        '201':
+          description: Disaster recorded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DisasterDto'
+        '400':
+          description: Invalid request or no machines to break
+
 
 components:
   schemas:
+    LogisticsRequestDto:
+      type: object
+      required:
+        - id
+        - type
+        - items
+      properties:
+        id:
+          type: string
+          description: Order ID or Pickup Request ID
+          example: "123"
+        type:
+          type: string
+          description: Type of logistics operation ("PICKUP" or "DELIVERY")
+          enum: [PICKUP, DELIVERY]
+          example: DELIVERY
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/LogisticsItemDto'
+
+    LogisticsItemDto:
+      type: object
+      required:
+        - name
+        - quantity
+      properties:
+        name:
+          type: string
+          description: Name of the item (e.g., "machine", "copper")
+          example: machine
+        quantity:
+          type: integer
+          description: Quantity of the item
+          example: 5
+
+    SimulationState:
+      type: object
+      properties:
+        isRunning:
+          type: boolean
+        startTimeUtc:
+          type: string
+          format: date-time
+          nullable: true
+        currentDay:
+          type: integer
+        simulationUnixEpoch:
+          type: integer
+          description: Seconds since 2050-01-01T00:00:00Z (simulation epoch)
+          example: 86400
+        canonicalSimulationDate:
+          type: string
+          format: date-time
+          description: Canonical simulation date (e.g., 2050-01-02T00:00:00Z)
+          example: 2050-01-02T00:00:00Z
+
+    MachineFailureDto:
+      type: object
+      required:
+        - machineName
+        - failureQuantity
+      properties:
+        machineName:
+          type: string
+          example: electronics_machine
+        failureQuantity:
+          type: integer
+          minimum: 1
+          example: 5
+        simulationDate:
+          type: string
+          format: date
+          example: 2050-01-15
+        simulationTime:
+          type: string
+          example: 14:30:45
+
+    DisasterDto:
+      type: object
+      properties:
+        disasterId:
+          type: integer
+          example: 1
+        brokenAt:
+          type: number
+          format: decimal
+          example: 2.500
+        machinesAffected:
+          type: integer
+          example: 5
+        brokenAtCanonical:
+          type: string
+          format: date-time
+          example: 2050-01-15T14:30:45Z
+
     ElectronicsOrderRequest:
       type: object
       properties:
         quantity:
           type: integer
           example: 1000
+
     ElectronicsOrderResponse:
       type: object
       properties:
@@ -147,6 +272,7 @@ components:
           type: string
           example: "123456123456"
           description: "Our bank account number for you to pay us"
+
     ElectronicsOrder:
       type: object
       properties:

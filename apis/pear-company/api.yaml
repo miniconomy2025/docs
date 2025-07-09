@@ -6,7 +6,7 @@ info:
     Public endpoints used for communication to Pear Phones Company
 
 servers:
-  - url: http://pear-company-api.projects.bbdgrad.com
+  - url: https://pear-company-api.projects.bbdgrad.com/public-api
 
 components:
   schemas:
