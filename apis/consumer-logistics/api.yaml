@@ -9,7 +9,61 @@ tags:
     description: Endpoints related to managing companies.
 
 paths:
-  /pickup:
+  /api/webhook/payment-updates:
+    post:
+      description: Receives payment notifications from the bank and truck fulfillment notifications from THOH.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                transaction_number:
+                  type: string
+                status:
+                  type: string
+                  description: Payment status (for pickup/invoice payments)
+                amount:
+                  type: number
+                timestamp:
+                  type: string
+                  format: date-time
+                reference:
+                  type: string
+                  description: Invoice reference (for pickup/invoice payments)
+                canFulfill:
+                  type: boolean
+                  description: Indicates if the truck order can be fulfilled (for truck fulfillment)
+                truckName:
+                  type: string
+                quantity:
+                  type: integer
+                operatingCostPerDay:
+                  type: number
+                orderId:
+                  type: integer
+                itemName:
+                  type: string
+                totalPrice:
+                  type: number
+                message:
+                  type: string
+
+              required:
+                - timestamp
+      responses:
+        '200':
+          description: Notification received and processed.
+        '400':
+          description: Invalid payload or missing required fields.
+        '404':
+          description: Truck type not found.
+        '500':
+          description: Internal server error.
+  
+  
+  /pickups:
     post:
       tags:
         - Pickup Management
@@ -30,6 +84,9 @@ paths:
                 recipient:
                   type: string
                   example: Mazibuko
+                modelName:
+                  type: string
+                  example: "Model X"
                 
                 
       responses:
