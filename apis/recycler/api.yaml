@@ -7,35 +7,24 @@ info:
     Includes phone recycling, raw material tracking, supplier orders, and company registration.
 
 paths:
-
-  /materials:
-    get:
-      summary: Get info on raw materials
-      description: Returns a list of raw materials currently available in the Recycler's inventory.
-      responses:
-        '200':
-          description: Successfully retrieved raw materials
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  materials:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        id:
-                          type: integer
-                        name:
-                          type: string
-                        available_quantity_in_kg:
-                          type: number
-                          format: float
-                        price:
-                          type: number
-                          format: float
-
+  
+  /Materials:
+      get:
+        summary: Get list of available materials
+        operationId: getMaterials
+        responses:
+          '200':
+            description: A list of available materials
+            content:
+              application/json:
+                schema:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/MaterialDto'
+          '500':
+            description: Internal server error
+  
+  
   /orders:
     post:
       summary: Create a raw materials order
@@ -107,12 +96,12 @@ paths:
                     type: string
                     format: date-time
 
-  /orders/{order_number}:
+  /orders/{orderNumber}:
     get:
       summary: View specific order by order number
       description: Retrieves a single order's details by its order number.
       parameters:
-        - name: order_number
+        - name: orderNumber
           in: path
           required: true
           schema:
@@ -135,83 +124,324 @@ paths:
                   timeStamp:
                     type: string
                     format: date-time
-
-  /companies:
-    post:
-      summary: Create a company
-      description: Registers a new company with a defined role (e.g., Supplier, Recycler).
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                name:
-                  type: string
-                roleId:
-                  type: integer
-              required:
-                - name
-                - roleId
-      responses:
-        '201':
-          description: Company created successfully
+  
+  /api/BankNotification:
+      post:
+        summary: To receive a bank transaction notification
+        operationId: postBankNotification
+        requestBody:
+          required: true
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  companyId:
+                  transaction_number:
+                    type: string
+                  status:
+                    type: string
+                  amount:
+                    type: number
+                    format: float
+                  timestamp:
                     type: integer
-                  name:
+                    format: int64
+                  description:
                     type: string
-                  role:
+                  from:
                     type: string
+                  to:
+                    type: string
+                required:
+                  - transaction_number
+                  - status
+                  - amount
+                  - timestamp
+                  - description
+                  - from
+                  - to
+        responses:
+          '200':
+            description: Request processed successfully (equivalent to Ok())
+          '500':
+            description: Internal error processing payment
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    statusCode:
+                      type: integer
+                      example: 500
+                    message:
+                      type: string
+                      example: Internal error processing payment
 
-  /pop:
-    patch:
-      summary: Submit Proof of Payment (POP)
-      description: Retrieves a POP document for a completed order.
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                orderId:
-                  type: integer
-              required:
-                - orderId
-      responses:
-        '200':
-          description: POP document retrieved
+  /logistics:
+      post:
+        summary: To receive a logistics event
+        operationId: postLogistics
+        requestBody:
+          required: true
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  orderId:
-                    type: integer
-                  orderNumber:
+                  id:
                     type: string
-                    format: uuid
-                  supplierName:
+                    example: "LOG123"
+                  type:
                     type: string
-                  materials:
+                    example: "delivery"
+                  items:
                     type: array
                     items:
                       type: object
                       properties:
-                        material:
+                        name:
                           type: string
+                          example: "Plastic Bottles"
                         quantity:
-                          type: number
-                        price:
-                          type: number
-                  confirmationMessage:
+                          type: integer
+                          example: 100
+                      required:
+                        - name
+                        - quantity
+                required:
+                  - id
+                  - type
+                  - items
+        responses:
+          '200':
+            description: Logistics event processed successfully
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/LogisticsResponseDto'
+          '500':
+            description: Internal server error while processing logistics event
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    message:
+                      type: string
+                      example: An internal server error occurred while processing the logistics event.
+                    details:
+                      type: string
+                      example: 'System.NullReferenceException: Object reference not set to an instance of an object.'
+
+  /api/Logistics/consumer-deliveries:
+    post:
+      summary: Submit consumer delivery logistics
+      operationId: postConsumerDeliveries
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  example: "delivered"
+                modelName:
+                  type: string
+                  example: "EcoBin 3000"
+                quantity:
+                  type: integer
+                  example: 5
+              required:
+                - status
+                - modelName
+                - quantity
+      responses:
+        '200':
+          description: Consumer delivery processed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConsumerLogisticsDeliveryResponseDto'
+        '400':
+          description: Bad request – invalid input
+        '500':
+          description: Internal server error while processing consumer delivery
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
                     type: string
+                    example: An internal server error occurred while processing the logistics event.
+                  details:
+                    type: string
+                    example: 'System.Exception: Unexpected null reference.'
+
+  /recycler/notifyme:
+    post:
+      summary: To get notified from The Hand about available phones
+      operationId: notifyAvailablePhones
+      requestBody:
+        description: No request body required
+        required: false
+        content: { }
+      responses:
+        '200':
+          description: Notification processed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Phones are available.
+                  results:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        modelName:
+                          type: string
+                          example: EPhone X
+                        status:
+                          type: string
+                          example: Failed
+                        error:
+                          type: string
+                          example: Failed to parse delivery order response.
+                      required:
+                        - modelName
+                        - status
+                        - error
+        '400':
+          description: No recycled phones received from THoH
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: No recycled phones received from THoH.
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: An unexpected error occurred.
+                  details:
+                    type: string
+                    example: 'System.Exception: Something went wrong during processing.'
+
+  /Simulation:
+    post:
+      summary: Start simulation
+      operationId: startSimulation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                startTime:
+                  type: integer
+                  example: 1625247600
+              required:
+                  - startTime
+      responses:
+        '200':
+          description: Simulation started successfully
+          content:
+            text/plain:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "success"
+                  message:
+                    type: string
+                    example: "Simulation started at 1625247600"
+        '400':
+          description: Bad request – invalid input
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  type:
+                    type: string
+                    example: "https://tools.ietf.org/html/rfc7231#section-6.5.1"
+                  title:
+                    type: string
+                    example: "One or more validation errors occurred."
+                  status:
+                    type: integer
+                    example: 400
+                  detail:
+                    type: string
+                    example: "The startTime field is required."
+                  instance:
+                    type: string
+                    example: "/Simulation"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "An unexpected error occurred while starting the simulation."
+
+  /machine-failure:
+    post:
+      summary: Report a machine failure
+      operationId: reportMachineFailure
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                machineName:
+                  type: string
+                  example: "electronics_machine"
+                failureQuantity:
+                  type: integer
+                  example: 5
+                simulationDate:
+                  type: string
+                  format: date
+                  example: "2050-01-15"
+                simulationTime:
+                  type: string
+                  format: time
+                  example: "14:30:45"
+              required:
+                - machineName
+                - failureQuantity
+                - simulationDate
+                - simulationTime
+      responses:
+        '200':
+          description: Machine failure reported successfully
+        '400':
+          description: Bad request – invalid input
+        '500':
+          description: Internal server error
+
 
 components:
   schemas:
@@ -267,3 +497,54 @@ components:
           type: string
         pricePerKg:
           type: number
+          
+          
+    LogisticsResponseDto:
+          type: object
+          properties:
+            message:
+              type: string
+              example: Logistics event recorded successfully.
+            logisticsRecordId:
+              type: string
+              example: "LOG-20250710-001"
+
+    ConsumerLogisticsDeliveryResponseDto:
+          type: object
+          properties:
+            referenceNo:
+              type: string
+              format: uuid
+              example: "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+            amount:
+              type: number
+              format: decimal
+              example: 250.75
+            accountNumber:
+              type: string
+              example: "ACC123456789"
+          required:
+            - referenceNo
+            - amount
+            - accountNumber
+    
+    MaterialDto:
+      type: object
+      properties:
+        name:
+          type: string
+          example: "Aluminum"
+        availableQuantityInKg:
+          type: number
+          format: float
+          example: 1200.5
+        pricePerKg:
+          type: number
+          format: float
+          example: 5.75
+      required:
+        - name
+        - availableQuantityInKg
+        - pricePerKg
+
+
