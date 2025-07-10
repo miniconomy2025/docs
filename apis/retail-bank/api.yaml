@@ -185,7 +185,7 @@ paths:
       tags:
         - TransferEndpoints
       summary: Transfer
-      description: "Transfer money between accounts. Debiting account\r\n`from` and crediting account `to`. This can be used \r\nfor transfers between retail bank accounts, and \r\nfor transfers to the commercial bank. Retail bank \r\naccount numbers start with `1000`, while commercial \r\nbank account numbers start with `2000`."
+      description: "Transfer money between accounts. Debiting account\r\n`from` and crediting account `to`. For idempotency,\r\nthe all four fields (`from`, `to`, `amount`, `reference`)\r\nmust together be unique. `reference` should be kept\r\nthe same for repeated requests to ensure multiple\r\ntransactions are not mistakenly created. If you need\r\nto check if a transfer was created with this request if \r\nthis is an existing transfer, check the `creationStatus` \r\nfield in the response. This can be used \r\nfor transfers between retail bank accounts, and \r\nfor transfers to the commercial bank. Retail bank \r\naccount numbers start with `1000`, while commercial \r\nbank account numbers start with `2000`."
       requestBody:
         content:
           application/json:
@@ -334,7 +334,6 @@ components:
         reference:
           type: integer
           format: int64
-          nullable: true
       additionalProperties: false
     CreateTransferResponse:
       type: object
@@ -342,7 +341,14 @@ components:
         transferId:
           type: string
           nullable: true
+        creationStatus:
+          $ref: '#/components/schemas/CreationStatus'
       additionalProperties: false
+    CreationStatus:
+      enum:
+        - NewTransfer
+        - ExistingTransfer
+      type: string
     LedgerAccountType:
       enum:
         - Internal
@@ -402,7 +408,6 @@ components:
         reference:
           type: integer
           format: int64
-          nullable: true
       additionalProperties: false
     TransferDtoCursorPagination:
       type: object
