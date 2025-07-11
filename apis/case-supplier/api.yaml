@@ -4,7 +4,7 @@ info:
   version: 1.0.0
 
 servers:
-  - url: http://case-supplier-api.projects.bbdgrad.com/api
+  - url: https://case-supplier-api.projects.bbdgrad.com/api
 
 tags:
   - name: Case
@@ -79,6 +79,9 @@ paths:
                   ordered_at:
                     type: string
                     example: "2025-07-06T09:35:20.819Z"
+                  accountNumber:
+                    type: string
+                    example: "123451234512"
         '400':
           description: Invalid request or insufficient stock
 
@@ -168,6 +171,23 @@ paths:
                   message:
                     type: string
                     example: "Successfully started simulation"
+  
+    delete:
+      tags:
+        - Simulation
+      summary: Stops the simulation
+      description: Stops the simulation for our server
+      responses:
+        200:
+          description: Successfully stopped simulation 
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Successfully stopped simulation"
 
   /machines/failure:
     post:
