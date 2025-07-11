@@ -341,14 +341,7 @@ components:
         transferId:
           type: string
           nullable: true
-        creationStatus:
-          $ref: '#/components/schemas/CreationStatus'
       additionalProperties: false
-    CreationStatus:
-      enum:
-        - NewTransfer
-        - ExistingTransfer
-      type: string
     LedgerAccountType:
       enum:
         - Internal
@@ -378,7 +371,7 @@ components:
     StartSimulationRequest:
       type: object
       properties:
-        unixEpochStartTime:
+        epochStartTime:
           type: integer
           format: int64
       additionalProperties: false
