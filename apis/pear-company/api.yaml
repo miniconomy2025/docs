@@ -209,7 +209,7 @@ paths:
         '400':
           description: Invalid delivery data
 
-  /machine/failure:
+  /failure/machines:
     post:
       summary: Report machine failure events to Pear phones
       requestBody:
