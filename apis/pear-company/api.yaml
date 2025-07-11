@@ -6,7 +6,7 @@ info:
     Public endpoints used for communication to Pear Phones Company
 
 servers:
-  - url: https://localhost:8080/public-api
+  - url: https://pear-company-api.projects.bbdgrad.com/public-api
 
 components:
   schemas:
@@ -52,7 +52,7 @@ components:
               price:
                 type: number
                 format: float
-    
+
     MachineFailure:
       type: object
       required:
@@ -77,6 +77,47 @@ components:
           pattern: '^\\d{2}:\\d{2}:\\d{2}$'
           description: Time of the failure event (HH:MM:SS)
 
+    OrderResponse:
+      type: object
+      required:
+        - order_id
+        - price
+        - accountNumber
+      properties:
+        order_id:
+          type: number
+          description: Reference number to use for payment
+        price:
+          type: number
+          format: float
+          description: Total price of the order
+        accountNumber:
+          type: string
+          example: "123456789012"
+          description: Bank account number for phones
+
+    Payment:
+      type: object
+      required:
+        - reference
+        - amount
+      properties:
+        reference:
+          type: number
+          description: Order id
+        amount:
+          type: number
+          format: float
+          description: Payment amount
+
+    DeliveryConfirmation:
+      type: object
+      required:
+        - delivery_reference
+      properties:
+        delivery_reference:
+          type: number
+          description: Delivery reference number
 
 paths:
   /simulation/start:
@@ -92,7 +133,7 @@ paths:
       responses:
         '200':
           description: Simulation tick processed
-          
+
   /stock:
     get:
       summary: Get current phone stock
@@ -103,7 +144,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Stock'
-                      
+
   /order:
     post:
       summary: Make an order for phones
@@ -119,23 +160,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                required:
-                  - order_id
-                  - price
-                  - accountNumber
-                properties:
-                  order_id:
-                    type: number
-                    description: Reference number to use for payment
-                  price:
-                    type: number
-                    format: float
-                    description: Total price of the order
-                  accountNumber:
-                    type: string
-                    example: "123456789012"
-                    description: Bank account number for phones
+                $ref: '#/components/schemas/OrderResponse'
         '400':
           description: Invalid order data
 
@@ -147,24 +172,12 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              required:
-                - reference
-                - amount
-              properties:
-                reference:
-                  type: number
-                  description: Order id
-                amount:
-                  type: number
-                  format: float
-                  description: Payment amount
+              $ref: '#/components/schemas/Payment'
       responses:
         '200':
           description: Payment accepted
         '400':
           description: Invalid payment data
-
 
   /goods-delivered:
     post:
@@ -174,13 +187,7 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              required:
-                - delivery_reference
-              properties:
-                delivery_reference:
-                  type: number
-                  description: Delivery reference number
+              $ref: '#/components/schemas/DeliveryConfirmation'
       responses:
         '200':
           description: Bulk delivery recorded
@@ -195,20 +202,14 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              required:
-                - delivery_reference
-              properties:
-                delivery_reference:
-                  type: number
-                  description: Delivery reference number
+              $ref: '#/components/schemas/DeliveryConfirmation'
       responses:
         '200':
           description: Consumer delivery recorded
         '400':
           description: Invalid delivery data
-  
-  /machine-failure:
+
+  /machine/failure:
     post:
       summary: Report machine failure events to Pear phones
       requestBody:
