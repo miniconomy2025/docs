@@ -4,8 +4,10 @@ info:
   version: 1.0.0
   description: |
     Public endpoints used for communication to Pear Phones Company
+
 servers:
-  - url: https://pear-company-api.projects.bbdgrad.com/public-api
+  - url: https://localhost:8080/public-api
+
 components:
   schemas:
     Order:
@@ -15,37 +17,19 @@ components:
       properties:
         accountNumber:
           type: string
-          description: Optional account number for the order
         items:
           type: array
           items:
             type: object
-            required:
-               - phone_id
-               - quantity
+            required: 
+              - phone_id
+              - quantity
             properties:
-              phone_id:
-                 type: number
-                 description: ID of the phone model to order
-              quantity:
-                 type: number
-                 minimum: 1
-                 description: Quantity of phones to order
-    
-    OrderResponse:
-      type: object
-      required:
-        - order_id
-        - price
-      properties:
-        order_id:
-          type: number
-          description: Reference number to use for payment
-        price:
-          type: number
-          format: float
-          description: Total price of the order
-    
+              phone_id: 
+                type: number
+              quantity: 
+                type: number
+
     Stock:
       type: object
       properties:
@@ -53,49 +37,21 @@ components:
           type: array
           items:
             type: object
-            required:
-               - phone_id
-               - name
-               - quantity
-               - price
+            required: 
+              - phone_id
+              - name
+              - quantity
+              - price
             properties:
-              phone_id:
-                 type: number
-                 description: Unique identifier for the phone model
+              phone_id: 
+                type: number
               name:
                 type: string
-                description: Name of the phone model
-              quantity:
-                 type: number
-                 minimum: 0
-                 description: Available quantity in stock
+              quantity: 
+                type: number
               price:
                 type: number
                 format: float
-                description: Price per unit
-    
-    PaymentNotification:
-      type: object
-      required:
-        - reference
-        - amount
-      properties:
-        reference:
-          type: number
-          description: Order ID from the order creation response
-        amount:
-          type: number
-          format: float
-          description: Payment amount (must match order total)
-    
-    DeliveryConfirmation:
-      type: object
-      required:
-        - delivery_reference
-      properties:
-        delivery_reference:
-          type: number
-          description: Delivery reference number provided by logistics
     
     MachineFailure:
       type: object
@@ -108,99 +64,38 @@ components:
         machineName:
           type: string
           description: Name of the phone model whose machines failed (matches phones.name)
-          example: "ePhone"
         failureQuantity:
           type: integer
           minimum: 0
           description: Number of machines to retire
-          example: 2
         simulationDate:
           type: string
           format: date
           description: Date of the failure event (YYYY-MM-DD)
-          example: "2050-01-15"
         simulationTime:
           type: string
           pattern: '^\\d{2}:\\d{2}:\\d{2}$'
           description: Time of the failure event (HH:MM:SS)
-          example: "14:30:00"
-    
-    SimulationResponse:
-      type: object
-      required:
-        - message
-        - status
-      properties:
-        message:
-          type: string
-          description: Response message describing the operation result
-        tick:
-          type: number
-          description: Current simulation tick/day (0-indexed)
-        status:
-          type: string
-          enum: [running, stopped]
-          description: Current simulation status
-    
-    SuccessResponse:
-      type: object
-      required:
-        - message
-      properties:
-        message:
-          type: string
-          description: Success message
-    
-    ErrorResponse:
-      type: object
-      required:
-        - error
-      properties:
-        error:
-          type: string
-          description: Error type or category
-        message:
-          type: string
-          description: Detailed error message
+
 
 paths:
   /simulation/start:
     post:
       summary: Start a new simulation
-      description: |
-        Initializes and starts the manufacturing simulation. This will:
-        - Clear all existing simulation data
-        - Initialize the simulated clock
-        - Set up banking and initial loans
-        - Purchase initial manufacturing machines
-        - Start automatic daily ticking (every 2 minutes = 1 simulated day)
       responses:
         '200':
-          description: Simulation started successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SimulationResponse'
-              example:
-                message: "Simulation started successfully with full initialization"
-                tick: 0
-                status: "running"
-        '500':
-          description: Failed to start simulation
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              example:
-                error: "Failed to start simulation"
-                message: "Banking initialization failed"
+          description: Simulation started
 
+  /simulation/tick:
+    post:
+      summary: Progress simulation by one tick
+      responses:
+        '200':
+          description: Simulation tick processed
+          
   /stock:
     get:
       summary: Get current phone stock
-      description: |
-        Returns the current inventory of all phone models with their availability and pricing.
-        Stock levels are updated in real-time based on manufacturing and sales.
       responses:
         '200':
           description: List of phones with stock availability and price per phone
@@ -208,254 +103,122 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Stock'
-              example:
-                items:
-                  - phone_id: 1
-                    name: "ePhone"
-                    quantity: 50
-                    price: 299.99
-                  - phone_id: 2
-                    name: "ePhone plus"
-                    quantity: 25
-                    price: 599.99
-                  - phone_id: 3
-                    name: "ePhone pro max"
-                    quantity: 10
-                    price: 899.99
-        '500':
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-                        
+                      
   /order:
     post:
       summary: Make an order for phones
-      description: |
-        Place an order for one or more phone models. The system will:
-        - Check stock availability
-        - Calculate total price
-        - Reserve stock for 24 hours
-        - Return order ID and total price for payment
-        
-        Stock is reserved for 24 hours awaiting payment. If payment is not received within 24 hours, the reservation expires and stock is released.
       requestBody:
         required: true
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/Order'
-            examples:
-              single_item:
-                summary: Order single phone model
-                value:
-                  items:
-                    - phone_id: 1
-                      quantity: 2
-              multiple_items:
-                summary: Order multiple phone models
-                value:
-                  items:
-                    - phone_id: 1
-                      quantity: 1
-                    - phone_id: 2
-                      quantity: 1
-                    - phone_id: 3
-                      quantity: 1
       responses:
         '201':
           description: Order placed successfully. Items reserved for 24 hours awaiting payment.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OrderResponse'
-              example:
-                order_id: 1704067200000
-                price: 599.98
+                type: object
+                required:
+                  - order_id
+                  - price
+                  - accountNumber
+                properties:
+                  order_id:
+                    type: number
+                    description: Reference number to use for payment
+                  price:
+                    type: number
+                    format: float
+                    description: Total price of the order
+                  accountNumber:
+                    type: string
+                    example: "123456789012"
+                    description: Bank account number for phones
         '400':
           description: Invalid order data
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              examples:
-                insufficient_stock:
-                  summary: Insufficient stock
-                  value:
-                    error: "Invalid order data"
-                    message: "Insufficient stock for phone 1"
-                empty_order:
-                  summary: Empty order
-                  value:
-                    error: "Invalid order data"
-                    message: "Order must contain at least one item"
 
   /payment-made:
     post:
       summary: Notify that payment has been made to Pear phones
-      description: |
-        Confirm payment for a previously placed order. The payment amount must exactly match the order total.
-        Upon successful payment confirmation, the order status is updated and delivery arrangements begin.
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PaymentNotification'
-            example:
-              reference: 1704067200000
-              amount: 599.98
+              type: object
+              required:
+                - reference
+                - amount
+              properties:
+                reference:
+                  type: number
+                  description: Order id
+                amount:
+                  type: number
+                  format: float
+                  description: Payment amount
       responses:
         '200':
           description: Payment accepted
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SuccessResponse'
-              example:
-                message: "Payment accepted"
         '400':
           description: Invalid payment data
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              examples:
-                order_not_found:
-                  summary: Order not found
-                  value:
-                    error: "Invalid payment data"
-                    message: "Order 999999999 not found"
-                amount_mismatch:
-                  summary: Payment amount mismatch
-                  value:
-                    error: "Invalid payment data"
-                    message: "Payment amount 100.00 does not match order total 599.98"
+
 
   /goods-delivered:
     post:
       summary: Confirm delivery of bulk goods to Pear phones
-      description: |
-        Confirm that bulk goods (parts or machines) have been delivered to Pear phones.
-        This endpoint handles both:
-        - Parts deliveries from suppliers (updates inventory)
-        - Machine deliveries from THOH (activates manufacturing capacity)
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/DeliveryConfirmation'
-            example:
-              delivery_reference: 12345
+              type: object
+              required:
+                - delivery_reference
+              properties:
+                delivery_reference:
+                  type: number
+                  description: Delivery reference number
       responses:
         '200':
           description: Bulk delivery recorded
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SuccessResponse'
-              example:
-                message: "Bulk delivery recorded"
         '400':
           description: Invalid delivery data
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              example:
-                error: "Invalid delivery data"
-                message: "Delivery reference 12345 not found"
 
   /goods-collection:
     post:
       summary: Confirm consumer goods have been collected from Pear phones
-      description: |
-        Confirm that finished phones have been collected for delivery to customers.
-        This updates the delivery status and finalizes the order fulfillment process.
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/DeliveryConfirmation'
-            example:
-              delivery_reference: 67890
+              type: object
+              required:
+                - delivery_reference
+              properties:
+                delivery_reference:
+                  type: number
+                  description: Delivery reference number
       responses:
         '200':
           description: Consumer delivery recorded
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SuccessResponse'
-              example:
-                message: "Consumer delivery recorded"
         '400':
           description: Invalid delivery data
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              example:
-                error: "Invalid delivery data"
-                message: "Collection reference 67890 not found"
-
-  /failure/machines:
+  
+  /machine-failure:
     post:
       summary: Report machine failure events to Pear phones
-      description: |
-        Report manufacturing machine failures that require machines to be retired from service.
-        This reduces manufacturing capacity for the specified phone model.
-        
-        The machineName must match one of the available phone models (ePhone, ePhone plus, ePhone pro max).
       requestBody:
         required: true
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/MachineFailure'
-            example:
-              machineName: "ePhone"
-              failureQuantity: 2
-              simulationDate: "2050-01-15"
-              simulationTime: "14:30:00"
       responses:
         '200':
           description: Machine failure recorded
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SuccessResponse'
-              example:
-                message: "Machine failure recorded"
         '400':
           description: Invalid machine failure data
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              examples:
-                invalid_machine:
-                  summary: Invalid machine name
-                  value:
-                    error: "Invalid machine failure data"
-                    message: "Machine 'InvalidPhone' not found"
-                invalid_date:
-                  summary: Invalid date format
-                  value:
-                    error: "Invalid machine failure data"
-                    message: "Invalid date format. Expected YYYY-MM-DD"
-
-tags:
-  - name: Simulation
-    description: Simulation control operations
-  - name: Inventory
-    description: Stock and inventory management
-  - name: Orders
-    description: Order placement and payment processing
-  - name: Logistics
-    description: Delivery and collection confirmations
-  - name: Manufacturing
-    description: Machine failure reporting
-
