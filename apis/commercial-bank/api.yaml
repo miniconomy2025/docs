@@ -1,3 +1,4 @@
+#========================= Meta =========================#
 openapi: 3.0.3
 info:
   title: Simple Banking System API
@@ -5,116 +6,85 @@ info:
   description: |
     Commercial bank API for managing accounts, transactions, and loans.
 
+    ## Simulation Time
+    Simulation time values returned by this API represent the number of 'days' since the start of the simulation.
+    One 'day' in simulation time is equivalent to 2 minutes of real-world time.
+
+    ## Responses
+    All endpoints will return a response of the following type:
+    ```ts
+      type Result<S extends object, E extends object = {}> = (
+        ({ success: true } & S) |
+        ({ success: false; error: string } & E)
+      );
+    ```
+
 servers:
   - url: https://commercial-bank-api.projects.bbdgrad.com/api
 
+#========================= Schemas =========================#
 components:
   schemas:
     Transaction:
       type: object
       properties:
-        transaction_number:
-          type: string
-        from:
-          type: string
-        to:
-          type: string
-        amount:
-          type: number
-          format: float
-        description:
-          type: string
-        status:
-          type: string
-        timestamp:
-          type: number
-          format: float
-          description: Simulation time when the transaction occurred
+        transaction_number: { type: string }
+        from:               { type: string, description: Sender account number }
+        to:                 { type: string, description: Recipient account number }
+        amount:             { type: number, format: float }
+        description:        { type: string }
+        status:             { type: string }
+        timestamp:          { type: number, format: float, description: Simulation time when the transaction occurred }
     TransactionNotification:
       type: object
       properties:
-        transaction_number:
-          type: string
-        status:
-          type: string
-        amount:
-          type: number
-        timestamp:
-          type: number
-          format: float
-          description: Simulation time when the transaction occurred
-        description:
-          type: string
-        to:
-          type: string
-        from:
-          type: string
+        transaction_number: { type: string }
+        status:             { type: string }
+        amount:             { type: number }
+        timestamp:          { type: number, format: float, description: Simulation time when the transaction occurred }
+        description:        { type: string }
+        to:                 { type: string }
+        from:               { type: string }
     Loan:
       type: object
       properties:
-        loan_number:
-          type: string
-        initial_amount:
-          type: number
-        interest_rate:
-          type: number
-        started_at:
-          type: number
-          format: float
-          description: Simulation time when the loan started
-        write_off:
-          type: boolean
-        outstanding_amount:
-          type: number
+        loan_number:        { type: string }
+        initial_amount:     { type: number }
+        interest_rate:      { type: number }
+        write_off:          { type: boolean }
+        outstanding_amount: { type: number }
     LoanPayment:
       type: object
       properties:
-        timestamp:
-          type: number
-          format: float
-          description: Simulation time when the payment was made
-        amount:
-          type: number
-        is_interest:
-          type: boolean
-
-
+        timestamp:          { type: number, format: float, description: Simulation time when the payment was made }
+        amount:             { type: number }
+        is_interest:        { type: boolean }
 paths:
+
+#========================= /account =========================#
+# [POST] /account :: Create a new account
   /account:
     post:
       tags: [Account]
       summary: Create a new account
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
+      requestBody: { content: { application/json: { schema: { type: object, properties: { callbackURL: { type: string, description: Optional callback URL for notifications } } } } } }
       responses:
-        '200':
-          description: Account created
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  account_number:
-                    type: string
+        '200': { description: Account created,        content: { application/json: { schema: { type: object, properties: { success: { type: boolean, example: true }, account_number: { type: string } } } } } }
+        '400': { description: Invalid request,        content: { application/json: { schema: { type: object, properties: { success: { type: boolean, example: false }, error:         { type: string, example: invalidPayload } } } } } }
+        '409': { description: Account already exists, content: { application/json: { schema: { type: object, properties: { success: { type: boolean, example: false }, error:         { type: string, example: accountAlreadyExists } } } } } }
+        '500': { description: Internal error,         content: { application/json: { schema: { type: object, properties: { success: { type: boolean, example: false }, error:         { type: string, example: internalError } } } } } }
 
+# [GET] /account/me :: Get your account number
   /account/me:
     get:
       tags: [Account]
       summary: Get your account number
       responses:
-        '200':
-          description: Account number
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  account_number:
-                    type: string
+        '200': { description: Account number,    content: { application/json: { schema: { type: object, properties: { success: { type: boolean, example: true }, account_number: { type: string } } } } } }
+        '404': { description: Account not found, content: { application/json: { schema: { type: object, properties: { success: { type: boolean, example: false }, error:         { type: string, example: accountNotFound } } } } } }
+        '500': { description: Internal error,    content: { application/json: { schema: { type: object, properties: { success: { type: boolean, example: false }, error:         { type: string, example: internalError } } } } } }
 
+# [POST] /account/me/notify :: Set or update notification URL
   /account/me/notify:
     post:
       tags: [Account]
@@ -122,84 +92,52 @@ paths:
       description: |
         If set, when a payment is received in your account, a callback request will be sent to this URL to notify you that you've received a payment
         (See [**POST** `/transaction`](#/default/post_transaction) for more details)
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                notification_url:
-                  type: string
+      requestBody: { content: { application/json: { schema: { type: object, properties: { notification_url: { type: string } } } } } }
       responses:
-        '200':
-          description: Notification URL updated
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
+        '200': { description: Notification URL updated, content: { application/json: { schema: { type: object, properties: { success: { type: boolean, example: true } } } } } }
+        '400': { description: Invalid notification URL, content: { application/json: { schema: { type: object, properties: { success: { type: boolean, example: false }, error: { type: string, example: invalidNotificationUrl } } } } } }
+        '404': { description: Account not found,        content: { application/json: { schema: { type: object, properties: { success: { type: boolean, example: false }, error: { type: string, example: accountNotFound } } } } } }
+        '500': { description: Internal error,           content: { application/json: { schema: { type: object, properties: { success: { type: boolean, example: false }, error: { type: string, example: internalError } } } } } }
 
+# [GET] /account/me/balance :: Get your account balance
   /account/me/balance:
     get:
       tags: [Account]
       summary: Get your account balance
       responses:
-        '200':
-          description: Current balance
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  balance:
-                    type: number
+        '200': { description: Current balance,   content: { application/json: { schema: { type: object, properties: { success: { type: boolean, example: true }, balance: { type: number } } } } } }
+        '404': { description: Account not found, content: { application/json: { schema: { type: object, properties: { success: { type: boolean, example: false }, error:  { type: string, example: accountNotFound } } } } } }
+        '500': { description: Internal error,    content: { application/json: { schema: { type: object, properties: { success: { type: boolean, example: false }, error:  { type: string, example: internalError } } } } } }
 
+# [GET] /account/me/frozen :: Check if account is frozen
   /account/me/frozen:
     get:
       tags: [Account]
       summary: Check if account is frozen
       responses:
-        '200':
-          description: Frozen status
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  frozen:
-                    type: boolean
+        '200': { description: Frozen status,     content: { application/json: { schema: { type: object, properties: { success: { type: boolean, example: true }, frozen: { type: boolean } } } } } }
+        '404': { description: Account not found, content: { application/json: { schema: { type: object, properties: { success: { type: boolean, example: false }, error: { type: string, example: accountNotFound } } } } } }
+        '500': { description: Internal error,    content: { application/json: { schema: { type: object, properties: { success: { type: boolean, example: false }, error: { type: string, example: internalError } } } } } }
 
+# [GET] /account/me/loans :: Get outstanding loans
   /account/me/loans:
     get:
       tags: [Account]
       summary: Get outstanding loans
       responses:
-        '200':
-          description: Outstanding loan info
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  total_due:
-                    type: number
-                  loans:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        loan_number:
-                          type: string
-                        due:
-                          type: number
+        '200': { description: Outstanding loan info, content: { application/json: { schema: { type: object, properties: { success: { type: boolean, example: true }, total_due: { type: number }, loans: {  type: array, items: {  type: object, properties: {  loan_number: {  type: string }, due: {  type: number } } } } } } } } }
+        '404': { description: Account not found,     content: { application/json: { schema: { type: object, properties: { success: { type: boolean, example: false }, error:    { type: string, example: accountNotFound } } } } } }
+        '500': { description: Internal error,        content: { application/json: { schema: { type: object, properties: { success: { type: boolean, example: false }, error:    { type: string, example: internalError } } } } } }
 
+
+#========================= /transaction =========================#
+# [POST] /transaction :: Create a transaction
   /transaction:
     post:
       tags: [Transaction]
-      summary: Create a transaction
+      summary: Create a transaction (transfer money)
       description: |
+        ## Payment Notifications
         If the transaction is successful and the recipient account has a registered `notification_url`,
         a `POST` request will be sent to that URL with the following payload:
 
@@ -207,7 +145,7 @@ paths:
         ```json
         {
           "transaction_number": "string",
-          "status": "string",
+          "status": "success" | "insufficientFunds" | "connectionFailed" | "internalError",
           "amount": 123.45,
           "timestamp": 3.507, // simulation time
           "description": "string",
@@ -219,6 +157,45 @@ paths:
         The receiving server must respond with `200 OK` to acknowledge the notification.
 
         (See [**POST** `/account/me/notify`](#/default/post_account_me_notify) for setting your notification URL)
+
+        ---
+
+        ## Interbank Transfers
+        If the recipient account is stored with another bank (via the `to_bank_name` parameter), an interbank transfer will be automatically initiated and the recipient bank will be notified of the payment.
+
+        ---
+
+        ## Validation
+        The following validation is applied:
+
+        - `amount` > 0
+        - `description` must be a string of length <= 128
+        - `to_account_number` cannot be your own account
+        - `to_bank_name` name must be a valid bank identifier (`commercial-bank`, `retail-bank`, or `thoh`)
+        - Your account must have sufficient funds to cover the transaction `amount`
+        - Your account cannot be frozen
+        - If `to_bank_name` is `commercial-bank`, the account number must be a valid account within our bank.
+        - If `to_bank_name` is an external bank, the success of the transaction will depend on the success response of their API.
+
+      requestBody: { required: true, content: { application/json: { schema: { type: object, properties: { to_account_number: { type: string }, to_bank_name: { type: string, enum: ["commercial-bank", "retail-bank"] }, amount: { type: number }, description: { type: string } } } } } }
+      responses:
+        '200': { description: Transaction result,                   content: { application/json: { schema: { type: object, properties: { success: { type: boolean, example: true }, transaction_number: { type: string }, status: {  type: string } } } } } }
+        '400': { description: Invalid transaction request,          content: { application/json: { schema: { type: object, properties: { success: { type: boolean, example: false }, error:             { type: string, example: invalidPayload } } } } } }
+        '404': { description: Account not found,                    content: { application/json: { schema: { type: object, properties: { success: { type: boolean, example: false }, error:             { type: string, example: accountNotFound } } } } } }
+        '409': { description: Duplicate transaction,                content: { application/json: { schema: { type: object, properties: { success: { type: boolean, example: false }, error:             { type: string, example: transactionNumberAlreadyExists } } } } } }
+        '422': { description: Insufficient funds or frozen account, content: { application/json: { schema: { type: object, properties: { success: { type: boolean, example: false }, error:             { type: string, example: insufficientFunds } } } } } }
+        '500': { description: Internal error,                       content: { application/json: { schema: { type: object, properties: { success: { type: boolean, example: false }, error:             { type: string, example: internalError } } } } } } # E.g. if connection failed to external bank
+
+# [GET] /transaction :: Get bank statement
+    get:
+      description: |
+        ## Response
+        - The account requesting the bank statement will be either the `to` or `from` account in each of the returned transactions
+          - Being the `to` indicates that money was received
+          - Being the `from` indicates that money was transferred out
+
+      tags: [Transaction]
+      summary: Get bank statement
       requestBody:
         required: true
         content:
@@ -226,63 +203,16 @@ paths:
             schema:
               type: object
               properties:
-                to_account_number:
-                  type: string
-                to_bank_name:
-                  type: string
-                  enum: ["commercial-bank", "retail-bank"]
-                amount:
-                  type: number
-                description:
-                  type: string
+                time_from: { type: number, format: float, description: Simulation time (start) }
+                time_to: { type: number, format: float, description: Simulation time (end) }
+                only_successful: { type: boolean, default: true }
       responses:
-        '200':
-          description: Transaction result
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                  transaction_number:
-                    type: string
-                  status:
-                    type: string
+        '200': { description: List of transactions, content: { application/json: { schema: { type: object, properties: { success: { type: boolean, example: true }, transactions: { type: array, items: {  $ref: '#/components/schemas/Transaction' } } } } } } }
+        '400': { description: Invalid request,      content: { application/json: { schema: { type: object, properties: { success: { type: boolean, example: false }, error:       { type: string, example: invalidPayload } } } } } }
+        '404': { description: Account not found,    content: { application/json: { schema: { type: object, properties: { success: { type: boolean, example: false }, error:       { type: string, example: accountNotFound } } } } } }
+        '500': { description: Internal error,       content: { application/json: { schema: { type: object, properties: { success: { type: boolean, example: false }, error:       { type: string, example: internalError } } } } } }
 
-    get:
-      tags: [Transaction]
-      summary: Get bank statement
-      parameters:
-        - name: from
-          in: query
-          required: true
-          schema:
-            type: number
-            format: float
-            description: Simulation time (start)
-        - name: to
-          in: query
-          required: true
-          schema:
-            type: number
-            format: float
-            description: Simulation time (end)
-        - name: only_successful
-          in: query
-          required: false
-          schema:
-            type: boolean
-      responses:
-        '200':
-          description: List of transactions
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Transaction'
-
+# [GET] /transaction/{transaction_number} :: Get transaction details
   /transaction/{transaction_number}:
     get:
       tags: [Transaction]
@@ -291,87 +221,85 @@ paths:
         - name: transaction_number
           in: path
           required: true
-          schema:
-            type: string
+          schema: { type: string }
       responses:
-        '200':
-          description: Transaction details
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Transaction'
+        '200': { description: Transaction details,   content: { application/json: { schema: { type: object, properties: { success: { type: boolean, example: true }, transaction: { $ref: '#/components/schemas/Transaction' } } } } } }
+        '404': { description: Transaction not found, content: { application/json: { schema: { type: object, properties: { success: { type: boolean, example: false }, error:      { type: string, example: transactionNotFound } } } } } }
+        '500': { description: Internal error,        content: { application/json: { schema: { type: object, properties: { success: { type: boolean, example: false }, error:      { type: string, example: internalError } } } } } }
 
+
+#========================= /loan =========================#
+# [POST] /loan :: Take out a loan
   /loan:
     post:
+      description: |
+        ## Validation
+        The following validation is applied:
+        - `amount` >= 0
+        - The account exists
+        - The account is not frozen
+        - The loan is permitted, with consideration of:
+          - the total amount that is already loaned to the account
+          - the internal amount of money that that the bank currently has to loan out
+
       tags: [Loan]
       summary: Take out a loan
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                amount:
-                  type: number
+      requestBody: { required: true, content: { application/json: { schema: { type: object, properties: { amount: { type: number } } } } } }
       responses:
-        '200':
-          description: Loan creation result
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                  loan_number:
-                    type: string
-    get:
-      tags: [Loan]
-      summary: List all loans
-      responses:
-        '200':
-          description: List of loans
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Loan'
+        '200': { description: Loan creation result, content: { application/json: { schema: { type: object, properties: { success: { type: boolean, example: true }, loan_number: { type: string } } } } } }
+        '400': { description: Invalid loan request, content: { application/json: { schema: { type: object, properties: { success: { type: boolean, example: false }, error:      { type: string, example: invalidPayload } } } } } }
+        '422': { description: Loan not permitted,   content: { application/json: { schema: { type: object, properties: { success: { type: boolean, example: false }, error:      { type: string, example: loanNotPermitted } } } } } }
+        '500': { description: Internal error,       content: { application/json: { schema: { type: object, properties: { success: { type: boolean, example: false }, error:      { type: string, example: internalError } } } } } }
 
+# [GET] /loan :: List all loans for account
+    get:
+      description: |
+        Returns a list of all the currently active loans for the current account, as well as the total amount outstanding across all the loans.
+        Returned list is sorted by `interest_rate` descending, then by `outstanding_amount` descending.
+
+      tags: [Loan]
+      summary: List all loans for account
+      responses:
+        '200': { description: List of loans,     content: { application/json: { schema: { type: object, properties: { success: { type: boolean, example: true }, total_outstanding_amount: { type: number }, loans: {  type: array, items: {  $ref: '#/components/schemas/Loan' } } } } } } }
+        '404': { description: Account not found, content: { application/json: { schema: { type: object, properties: { success: { type: boolean, example: false }, error:                   { type: string, example: accountNotFound } } } } } }
+        '500': { description: Internal error,    content: { application/json: { schema: { type: object, properties: { success: { type: boolean, example: false }, error:                   { type: string, example: internalError } } } } } }
+
+# [POST] /loan/{loan_number}/pay :: Repay loan
   /loan/{loan_number}/pay:
     post:
+      description: |
+        ## Validation
+        The following validation is applied:
+        - `amount` > 0
+        - The caller has sufficient funds in their account
+        - `loan_number` points to a valid loan that:
+          - exists
+          - is not written off
+          - has not been fully paid off
+
+        > **Note**: There are no restrictions on making repayments for loans associated with a different account
+
+        ## Response
+        - The amount actually `paid` = min(`amount`, *\<loan outstanding amount\>*)
+
       tags: [Loan]
       summary: Repay loan
       parameters:
         - name: loan_number
           in: path
           required: true
-          schema:
-            type: string
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                amount:
-                  type: number
+          schema: { type: string }
+      requestBody: { required: true, content: { application/json: { schema: { type: object, properties: { amount: { type: number } } } } } }
       responses:
-        '200':
-          description: Payment result
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                  paid:
-                    type: number
+        '200': { description: Payment result,          content: { application/json: { schema: { type: object, properties: { success: { type: boolean, example: true }, paid:   { type: number } } } } } }
+        '400': { description: Invalid payment request, content: { application/json: { schema: { type: object, properties: { success: { type: boolean, example: false }, error: { type: string, example: invalidPayload } } } } } }
+        '404': { description: Loan not found,          content: { application/json: { schema: { type: object, properties: { success: { type: boolean, example: false }, error: { type: string, example: loanNotFound } } } } } }
+        '409': { description: Loan already paid off,   content: { application/json: { schema: { type: object, properties: { success: { type: boolean, example: false }, error: { type: string, example: loanPaidOff } } } } } }
+        '410': { description: Loan written off,        content: { application/json: { schema: { type: object, properties: { success: { type: boolean, example: false }, error: { type: string, example: loanWrittenOff } } } } } }
+        '422': { description: Payment not permitted,   content: { application/json: { schema: { type: object, properties: { success: { type: boolean, example: false }, error: { type: string, example: paymentNotPermitted } } } } } }
+        '500': { description: Internal error,          content: { application/json: { schema: { type: object, properties: { success: { type: boolean, example: false }, error: { type: string, example: internalError } } } } } }
 
-
+# [GET] /loan/{loan_number} :: Get specific loan details
   /loan/{loan_number}:
     get:
       tags: [Loan]
@@ -380,121 +308,52 @@ paths:
         - name: loan_number
           in: path
           required: true
-          schema:
-            type: string
+          schema: { type: string }
       responses:
-        '200':
-          description: Loan details
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  loan_number:
-                    type: string
-                  initial_amount:
-                    type: number
-                  outstanding_amount:
-                    type: number
-                  interest_rate:
-                    type: number
-                  started_at:
-                    type: number
-                    format: float
-                    description: Simulation time when the loan started
-                  write_off:
-                    type: boolean
-                  payments:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/LoanPayment'
+        '200': { description: Loan details,   content: { application/json: { schema: { type: object, properties: { success: { type: boolean, example: true }, loan:   { type: object, properties: {  loan_number: {  type: string }, initial_amount: {  type: number }, outstanding_amount: {  type: number }, interest_rate: {  type: number }, write_off: {  type: boolean }, payments: {  type: array, items: {  $ref: '#/components/schemas/LoanPayment' } } } } } } } } }
+        '404': { description: Loan not found, content: { application/json: { schema: { type: object, properties: { success: { type: boolean, example: false }, error: { type: string, example: loanNotFound } } } } } }
+        '500': { description: Internal error, content: { application/json: { schema: { type: object, properties: { success: { type: boolean, example: false }, error: { type: string, example: internalError } } } } } }
 
+
+#========================= /interbank =========================#
+# [POST] /interbank/transfer :: Notify of incoming inter-bank transfer
   /interbank/transfer:
     post:
       tags: [Interbank]
       summary: Notify of incoming inter-bank transfer
       description: |
+        ## About
         Used by foreign banks to notify this system that a transfer has been initiated from one of their accounts to a local account.
+
         The request must be issued with a valid signed certificate to identify the bank of origin and must include sufficient details to record the transaction.
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - transaction_number
-                - from_account_number
-                - from_bank_name
-                - to_account_number
-                - amount
-                - description
-              properties:
-                transaction_number:
-                  type: string
-                  description: Unique transaction reference number from the sending bank.
-                from_account_number:
-                  type: string
-                  description: Foreign sender's account number.
-                to_account_number:
-                  type: string
-                  description: Local recipient account number.
-                amount:
-                  type: number
-                  format: float
-                  description: Amount being transferred.
-                description:
-                  type: string
-                  description: Optional description for the transfer.
-                timestamp:
-                  type: number
-                  format: float
-                  description: Simulation time when the transfer was initiated
+
+        It is expected that other banks (`retail-bank`, `thoh`) will implement a similar endpoint if they require us to send money to them.
+
+        ## Notes
+        - Internally we derive the `from_bank_name` from the bank's mTLS client certificate (`retail-bank` / `thoh`)
+
+        - If the interbank transfer **fails** in any way, **we do not create a new transaction in our transactions table**, and no payment notification is sent to the recipient account.
+          - This allows subsequent requests to pass the same `transaction_number` in the request to retry the transfer.
+
+        ## Validation
+        - `amount` > 0
+        - `description` length <= 128
+        - `to_account_number` is a valid existing account
+        - `transaction_number` must not be an existing transaction number
+
+      requestBody: { required: true, content: { application/json: { schema: { type: object, required: [transaction_number, from_account_number, from_bank_name, to_account_number, amount, description], properties: { transaction_number: { type: string, description: Unique transaction reference number from the sending bank. }, from_account_number: { type: string, description: Foreign sender's account number. }, to_account_number: { type: string, description: Local recipient account number. }, amount: { type: number, format: float, description: Amount being transferred. }, description: { type: string, description: Optional description for the transfer. } } } } } }
       responses:
-        '200':
-          description: Notification accepted
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
+        '200': { description: Transfer accepted,                   content: { application/json: { schema: { type: object, properties: { success: { type: boolean, example: true } } } } } }
+        '400': { description: Validation or processing error,      content: { application/json: { schema: { type: object, properties: { success: { type: boolean, example: false }, error: { type: string, example: invalidPayload } } } } } }
+        '404': { description: Unknown recipient account,           content: { application/json: { schema: { type: object, properties: { success: { type: boolean, example: false }, error: { type: string, example: unknownRecipientAccount } } } } } }
+        '409': { description: Transaction number already exists,   content: { application/json: { schema: { type: object, properties: { success: { type: boolean, example: false }, error: { type: string, example: duplicateTransactionNumber } } } } } }
+        '422': { description: Transfer not permitted,              content: { application/json: { schema: { type: object, properties: { success: { type: boolean, example: false }, error: { type: string, example: transferNotPermitted } } } } } }
+        '500': { description: Internal error,                      content: { application/json: { schema: { type: object, properties: { success: { type: boolean, example: false }, error: { type: string, example: internalError } } } } } }
 
-        '400':
-          description: Validation or processing error
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: false
-                  error:
-                    type: string
-                    example: unknown_recipient_account
-        '409':
-          description: Duplicate transaction number
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: false
-                  error:
-                    type: string
-                    example: transaction_number_already_exists
 
+#========================= Tags =========================#
 tags:
-  - name: Account
-    description: Endpoints for managing accounts
-  - name: Transaction
-    description: Endpoints for transactions and statements
-  - name: Loan
-    description: Endpoints for loans and repayments
-  - name: Interbank
-    description: Endpoints for interbank transfers
+  - { name: Account,     description: Endpoints for managing accounts }
+  - { name: Transaction, description: Endpoints for transactions and statements }
+  - { name: Loan,        description: Endpoints for loans and repayments }
+  - { name: Interbank,   description: Endpoints for interbank transfers }
