@@ -58,7 +58,7 @@ paths:
           description: Internal server error.
   
   
-  api/pickups:
+  /api/pickups:
     post:
       tags:
         - Pickup Management
@@ -181,7 +181,7 @@ paths:
                     type: string
                     example: "An unexpected error occurred."
 
-  api/companies:
+  /api/companies:
     post:
       tags:
         - Company Management
