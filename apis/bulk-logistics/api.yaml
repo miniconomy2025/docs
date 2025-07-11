@@ -1,0 +1,362 @@
+openapi: 3.0.0
+info:
+  title: Bulk Logistics API
+  version: 1.0.0
+  description: API for managing pickup requests and other resources. Keep in mind that at the time, we are using id's as input parameters. In future, we expect to use the sub within your certificate for operations involving your identity. Additionally, we will expect company names in their kebab case format on the github repos (bulk-logistics, case-supplier, etc).
+servers:
+  - url: https://bulk-logistics-api.projects.bbdgrad.com
+    description: Local development server
+tags:
+  - name: Pickup Requests
+    description: Operations related to pickup requests
+
+paths:
+  /api/pickup-request:
+    post:
+      tags:
+        - Pickup Requests
+      summary: Create a new pickup request
+      description: Submits the details for a new pickup request and returns payment information.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PickupRequestRequest'
+      responses:
+        '201':
+          description: Pickup request created successfully. Awaiting payment.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PickupRequestCreateResponse'
+        '400':
+          description: Invalid input data provided.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: Too many requests.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/pickup-request/{id}:
+    get:
+      tags:
+        - Pickup Requests
+      summary: Get a single pickup request
+      description: Retrieves the details and status of a specific pickup request by its ID.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+          description: Numeric ID of the pickup request to retrieve.
+      responses:
+        '200':
+          description: Successful retrieval of pickup request details.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetPickupRequestResponse'
+        '404':
+          description: No pickup request found with the provided ID.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: Too many requests.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/pickup-request/company/{companyName}:
+    get:
+      tags:
+        - Pickup Requests
+      summary: Get all pickup requests for a company
+      description: Retrieves a list of all pickup requests associated with a specific company ID.
+      parameters:
+        - in: path
+          name: companyName
+          required: true
+          schema:
+            type: string
+          description: Name of the company to retrieve pickup requests for.
+      responses:
+        '200':
+          description: A list of pickup requests for the specified company.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/GetPickupRequestResponse'
+        '429':
+          description: Too many requests.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/truck/failure:
+    post:
+      tags:
+        - Hand (🤚) Events
+      summary: Post a notification of a truck failure.
+      description: Post a notification of a truck failure.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TruckFailureRequest'
+      responses:
+        '204':
+          description: Successful decomissioning of specified trucks
+        '429':
+          description: Too many requests.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/truck/delivery:
+    post:
+      tags:
+        - Hand (🤚) Events
+      summary: Post a notification of a truck delivery.
+      description: Post a notification of a truck delivery.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TruckDeliveryRequest'
+      responses:
+        '204':
+          description: Successful delivery of truck/s
+  /api/simulation:
+    post:
+      tags:
+        - Hand (🤚) Events
+      summary: Start the simulation with Unix epoch timestamp
+      description: |
+        Initialize and start the simulation time system.
+        
+        **Time System:**
+        - Accepts Unix epoch timestamp for synchronization
+        - 2 real minutes = 1 simulation day
+        - Simulation date starts at 2050-01-01
+        - Daily production cycles run automatically
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SimulationStartRequest'
+      responses:
+        '200':
+          description: Simulation started successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SimulationStartResponse'
+        '400':
+          description: Invalid start time or simulation already running
+  /api/bank:
+    post:
+      tags:
+       - Bank
+      summary: Notification endpoint for the commercial bank.
+      description: The commercial bank will use this endpoint to send notifications about payments to bulk logistics.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BankNotificationRequest'
+      responses:
+        '200':
+          description: Notification received successfully
+components:
+  schemas:
+    BankNotificationRequest:
+      type: object
+      required:
+        - transaction_number
+        - status
+        - amount
+        - timestamp
+        - description
+        - from
+        - to
+      properties:
+        transaction_number: 
+          type: string
+        status:
+          type: string
+        amount:
+          type: number
+        timestamp:
+          type: string
+        description:
+          type: string
+        from:
+          type: string
+        to:
+          type: string
+
+    SimulationStartRequest:
+      type: object
+      required:
+        - unixEpochStart
+      properties:
+        unixEpochStart:
+          type: integer
+          format: int64
+          description: Unix timestamp when simulation should start
+          example: 1735826400
+  
+    SimulationStartResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Simulation started successfully"
+        startedAt:
+          type: string
+          format: date-time
+          description: When simulation started (ISO format)
+          example: "2025-01-02T12:00:00+00:00"
+        currentDay:
+          type: integer
+          description: Current simulation day (0-based)
+          example: 0
+        simulationDateTime:
+          type: string
+          format: date-time
+          description: Current simulation date/time
+          example: "2050-01-01T00:00:00"
+    TruckDeliveryRequest:
+      type: object
+      required:
+        - orderId
+        - itemName
+        - quantity
+        - totalPrice
+        - status
+        - message
+        - canFulfill
+        - maximumLoad
+        - operationalCostPerDay
+      properties:
+        orderId:
+          type: number
+        itemName:
+          type: string
+        quantity:
+          type: number
+        totalPrice:
+          type: number
+        status:
+          type: string
+        message:
+          type: string
+        canFulfill:
+          type: boolean
+        maximumLoad:
+          type: number
+        operationalCostPerDay:
+          type: number
+    TruckFailureRequest:
+      type: object
+      required:
+        - truckName
+        - failureQuantity
+        - simulationDate
+        - simulationTime
+      properties:
+        truckName:
+          type: string
+        failureQuantity:
+          type: number
+        simulationDate:
+          type: string
+        simulationTime:
+          type: string
+    PickupRequestRequest:
+      type: object
+      required:
+        - originalExternalOrderId
+        - originCompany
+        - destinationCompany
+        - items
+      properties:
+        originalExternalOrderId:
+          type: string
+        originCompany:
+          type: string
+        destinationCompany:
+          type: string
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ItemRequest'
+    ItemRequest:
+      type: object
+      required:
+        - itemName
+        - quantity
+      properties:
+        itemName:
+          type: string
+        quantity:
+          type: number
+      description: Represents an item in the pickup request.
+    PickupRequestCreateResponse:
+      type: object
+      properties:
+        pickupRequestId:
+          type: integer
+        cost:
+          type: number
+        paymentReferenceId:
+          type: string
+        bulkLogisticsBankAccountNumber:
+          type: string
+          description: Can be a string or number.
+        status:
+          type: string
+        statusCheckUrl:
+          type: string
+    GetPickupRequestResponse:
+      type: object
+      properties:
+        pickupRequestId:
+          type: integer
+        cost:
+          type: number
+        status:
+          type: string
+        originCompanyName:
+          type: string
+        originalExternalOrderId:
+          type: string
+        requestDate:
+          type: string
+          format: date-time
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ItemRequest'
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string

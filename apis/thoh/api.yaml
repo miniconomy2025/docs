@@ -1,0 +1,541 @@
+openapi: 3.0.3
+info:
+  title: THoH Simulation API
+  version: 1.0.0
+  description: |
+    A comprehensive simulation API for managing markets, machines, trucks, raw materials, orders, and collections with PostgreSQL persistence.
+    
+    ## Features:
+    - **Simulation Management**: Start and manage simulation lifecycle
+    - **Market Operations**: Purchase machines, trucks, and raw materials
+    - **Order System**: Create pending orders and process payments
+    - **Collection System**: Track items awaiting pickup after payment
+    - **Inventory Management**: Real-time inventory tracking with audit trails
+servers:
+  - url: n/a
+    description: Local server
+
+tags:
+  - name: Simulation
+    description: Simulation management endpoints
+  - name: Market
+    description: Market and inventory management endpoints
+  - name: Orders
+    description: Order management endpoints
+  - name: Collections
+    description: Collection management endpoints
+
+paths:
+  /unix-epoch-start-time:
+    get:
+      summary: Get current simulation epcoh start
+      tags: [Simulation]
+      responses:
+        '200':
+          description: Simulation unix epoch start time
+          content:
+            application/json:
+              schema:
+                type: string
+                example: '123455667889'
+        '400':
+          description: Simulation not running
+        '500':
+          description: Error
+  /current-simulation-time:
+    get:
+      summary: Get current simulation date and time
+      tags: [Simulation]
+      responses:
+        '200':
+          description: Simulation date and time
+  /machines:
+    get:
+      summary: Get machines for sale (grouped by type)
+      tags: [Market]
+      responses:
+        '200':
+          description: List of machines (grouped by type with averaged values, including weight for each machine)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  machines:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Machine'
+        '400':
+          description: Simulation not running
+        '404':
+          description: Machines not found
+    post:
+      summary: Create a new order for a machine
+      tags: [Market]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                machineName:
+                  type: string
+                quantity:
+                  type: integer
+      responses:
+        '200':
+          description: Machine order created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MachinePurchaseResponse'
+        '400':
+          description: Invalid request
+        '500':
+          description: Error
+
+  /trucks:
+    get:
+      summary: Get trucks for sale (grouped by type)
+      tags: [Market]
+      responses:
+        '200':
+          description: List of trucks (grouped by type with averaged values, including weight for each truck)
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Vehicle'
+        '400':
+          description: Simulation not running
+        '404':
+          description: Trucks market not found
+    post:
+      summary: Create a new order for a truck
+      tags: [Market]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                truckName:
+                  type: string
+                quantity:
+                  type: integer
+      responses:
+        '200':
+          description: Truck order created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VehiclePurchaseResponse'
+        '400':
+          description: Error
+        '404':
+          description: Market not found
+
+  /raw-materials:
+    get:
+      summary: Get raw materials (grouped by type)
+      tags: [Market]
+      responses:
+        '200':
+          description: List of raw materials (grouped by type with aggregated values)
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RawMaterial'
+        '400':
+          description: Simulation not running
+        '404':
+          description: Raw materials market not found
+    post:
+      summary: Create a new order for raw material
+      tags: [Market]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                materialName:
+                  type: string
+                weightQuantity:
+                  type: number
+      responses:
+        '200':
+          description: Raw material order created (pending - inventory will be reduced when paid)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RawMaterialPurchaseResponse'
+        '400':
+          description: Error, insufficient inventory, or simulation not running
+        '404':
+          description: Raw materials market not found
+
+  /orders:
+    get:
+      summary: Get all orders
+      tags: [Orders]
+      responses:
+        '200':
+          description: List of all orders
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Order'
+        '400':
+          description: Simulation not running
+        '500':
+          description: Error retrieving orders
+
+  /orders/payments:
+    post:
+      summary: Pay for and fulfill an order
+      tags: [Orders]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                orderId:
+                  type: integer
+                  description: ID of the order to pay for
+      responses:
+        '200':
+          description: Order paid and fulfilled successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  orderId:
+                    type: integer
+                    description: ID of the paid order
+                  itemName:
+                    type: string
+                    description: Name of the purchased item
+                  quantity:
+                    type: number
+                    description: Quantity purchased
+                  totalPrice:
+                    type: number
+                    description: Total price paid
+                  status:
+                    type: string
+                    enum: [completed]
+                    description: Updated order status
+                  message:
+                    type: string
+                    description: Success message
+                  canFulfill:
+                    type: boolean
+                    description: Whether the order can be fulfilled
+        '400':
+          description: Invalid request or order already completed/cancelled
+        '404':
+          description: Order not found
+        '500':
+          description: Error processing payment
+
+  /collections:
+    get:
+      summary: Get all collections (items awaiting pickup)
+      tags: [Collections]
+      responses:
+        '200':
+          description: List of all collections
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Collection'
+        '400':
+          description: Simulation not running
+        '500':
+          description: Error retrieving collections
+    patch:
+      summary: Mark an item as collected (partial or full)
+      tags: [Collections]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                orderId:
+                  type: integer
+                  description: ID of the order to mark as collected
+                collectQuantity:
+                  type: number
+                  description: Quantity to collect (optional, defaults to all remaining)
+      responses:
+        '200':
+          description: Item collected successfully (partial or full)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  orderId:
+                    type: integer
+                    description: ID of the collected order
+                  quantityRemaining:
+                    type: number
+                    description: Quantity remaining to collect
+        '400':
+          description: Invalid request, item already collected, or simulation not running
+        '404':
+          description: Collection not found
+        '500':
+          description: Error processing collection
+
+components:
+  schemas:
+    Machine:
+      type: object
+      properties:
+        machineName:
+          type: string
+          example: "ephone_pro_max_machine"
+          description: Machine type name
+        inputs:
+          type: string
+          description: Machine description/inputs
+        quantity:
+          type: integer
+          description: Total quantity for this machine type
+        inputRatio:
+          type: object
+          additionalProperties:
+            type: number
+          example:
+            copper: 2
+            plastic: 5
+            gold: 1
+          description: Mapping of material names to their required ratios for this machine type
+        productionRate:
+          type: integer
+          example: 500
+          description: Average production rate for this machine type
+        price:
+          type: number
+          description: Price for this machine type
+        weight:
+          type: number
+          description: Weight of a single machine (kg)
+    MachinePurchaseResponse:
+      type: object
+      properties:
+        orderId:
+          type: integer
+          description: Unique order identifier
+        machineName:
+          type: string
+          description: Name of the machine
+        totalPrice:
+          type: number
+          description: Total price of the order
+        unitWeight:
+          type: number
+          description: Weight of a single machine (kg)
+        totalWeight:
+          type: number
+          description: Total weight of all machines in the order (kg)
+        quantity:
+          type: integer
+          description: Quantity of machines purchased
+        machineDetails:
+          type: object
+          properties:
+            requiredMaterials:
+              type: string
+              description: Comma-separated list of required materials
+            inputRatio:
+              type: object
+              additionalProperties:
+                type: number
+              description: Mapping of material names to their required ratios
+            productionRate:
+              type: integer
+              description: Production rate of the machine
+        bankAccount:
+          type: string
+          description: Bank account for payment
+          example: "TREASURY_ACCOUNT"
+    Vehicle:
+      type: object
+      properties:
+        truckName:
+          type: string
+          example: "large_truck"
+          description: Truck type name
+        description:
+          type: string
+          description: Truck description
+        price:
+          type: number
+          description: Average price for this truck type
+        quantity:
+          type: integer
+          description: Total quantity for this truck type
+        operatingCost:
+          type: number
+          description: Average operating cost for this truck type
+        maximumLoad:
+          type: number
+          description: Average maximum load for this truck type (twice the truck's weight)
+        weight:
+          type: number
+          description: Weight of a single truck (kg)
+    VehiclePurchaseResponse:
+      type: object
+      properties:
+        orderId:
+          type: integer
+          description: Unique order identifier
+        truckName:
+          type: string
+          description: Name of the truck
+        price:
+          type: number
+          description: Total price of the order
+        maximumLoad:
+          type: number
+          description: Maximum load capacity (twice the truck's weight)
+        operatingCostPerDay:
+          type: string
+          description: Operating cost per day
+          example: "1000/day"
+        weight:
+          type: number
+          description: Weight of a single truck (kg)
+        totalWeight:
+          type: number
+          description: Total weight of all trucks in the order (kg)
+        quantity:
+          type: integer
+          description: Quantity of trucks purchased
+        bankAccount:
+          type: string
+          description: Bank account for payment
+          example: "TREASURY_ACCOUNT"
+    RawMaterial:
+      type: object
+      properties:
+        rawMaterialName:
+          type: string
+          example: "copper"
+          description: Raw material type name
+        description:
+          type: string
+          description: Raw material description
+        pricePerKg:
+          type: number
+          description: Average price per kg for this material type
+        quantityAvailable:
+          type: integer
+          description: Total quantity available for this material type
+    RawMaterialPurchaseResponse:
+      type: object
+      properties:
+        orderId:
+          type: integer
+          description: Unique order identifier
+        materialName:
+          type: string
+          description: Name of the material
+        weightQuantity:
+          type: number
+          description: Weight quantity purchased
+        price:
+          type: number
+          description: Total price of the order
+        bankAccount:
+          type: string
+          description: Bank account for payment
+          example: "TREASURY_ACCOUNT"
+    Order:
+      type: object
+      properties:
+        orderId:
+          type: integer
+          description: Unique order identifier
+        itemName:
+          type: string
+          description: Name of the purchased item
+        itemId:
+          type: integer
+          description: ID of the specific item being purchased
+        quantity:
+          type: number
+          description: Quantity purchased
+        unitPrice:
+          type: number
+          description: Price per unit
+        totalPrice:
+          type: number
+          description: Total price of the order
+        currency:
+          type: string
+          description: Currency code
+        orderDate:
+          type: string
+          format: date-time
+          description: When the order was placed
+        status:
+          type: string
+          enum: [pending, completed, cancelled]
+          description: Order status
+        itemType:
+          type: string
+          description: Type of item (truck, machine, raw_material)
+        item_type_id:
+          type: integer
+          description: ID reference to item_types table
+        marketId:
+          type: integer
+          description: ID of the market where the order was placed (1=machine, 2=vehicle, 3=raw_materials)
+    Collection:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Collection ID
+        orderId:
+          type: integer
+          description: Associated order ID
+        itemName:
+          type: string
+          description: Name of the item
+        itemId:
+          type: integer
+          description: ID of the specific item
+        quantity:
+          type: number
+          description: Quantity to collect
+        orderDate:
+          type: string
+          format: date-time
+          description: When the order was placed
+        collected:
+          type: boolean
+          description: Whether the item has been collected
+        collectionDate:
+          type: string
+          format: date-time
+          description: When the item was collected (if collected) 

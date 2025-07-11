@@ -1,0 +1,220 @@
+openapi: 3.0.3
+info:
+  title: SumSang Phones API
+  version: 1.0.0
+  description: |
+    Public endpoints used for communication to SumSang Phones
+
+servers:
+  - url: https://sumsang-phones-api.projects.bbdgrad.com/public-api
+
+components:
+  schemas:
+    Order:
+      type: object
+      required:
+        - account_number
+        - items
+      properties:
+        account_number:
+          type: string
+        items:
+          type: array
+          items:
+            type: object
+            required: 
+              - model
+              - quantity
+            properties:
+              model: 
+                type: string
+              quantity: 
+                type: number
+
+    Stock:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            type: object
+            required: 
+              - phoneId
+              - name
+              - quantity
+              - price
+            properties:
+              phoneId: 
+                type: number
+              name:
+                type: string
+              quantity: 
+                type: number
+              price:
+                type: number
+                format: float
+
+
+
+paths:
+  /simulations:
+    post:
+      summary: Start a new simulation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - epochStartTime
+              properties:
+                epochStartTime:
+                  type: string
+                  description: Unix epoch time of simulation start
+      responses:
+        '200':
+          description: Simulation started
+          
+  /machine-failure:
+    post:
+      summary: Break a machine random event
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - machineName
+                - failureQuantity
+              properties:
+                machineName:
+                  type: string
+                  example: cosmos_z25_machine
+                failureQuantity:
+                  type: number
+                  example: 5
+      responses:
+        '200':
+          description: Random event processed sucessfully
+        '400':
+          description: Invalid request body
+
+  /stock:
+    get:
+      summary: Get current phone stock
+      responses:
+        '200':
+          description: List of phones with stock availability and price per phone
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Stock'
+                      
+  /orders:
+    post:
+      summary: Make an order for phones
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Order'
+      responses:
+        '200':
+          description: Order placed successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - orderId
+                  - price
+                  - accountNumber
+                properties:
+                  orderId:
+                    type: number
+                    description: Reference number to use for payment
+                  price:
+                    type: number
+                    format: float
+                    description: Total price of the order
+                  accountNumber:
+                    type: string
+                    example: "123456789012"
+                    description: Bank account number for SumSang phones
+        '400':
+          description: Invalid order data
+
+  /logistics:
+    post:
+      summary: Confirm delivery or pickup
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - type: object
+                  required: [type, id, quantity]
+                  properties:
+                    type:
+                      type: string
+                      enum: [PICKUP]
+                      description: Type of logistics request
+                    id:
+                      type: string
+                      description: Delivery reference for consumer logistics
+                    quantity:
+                      type: number
+                      description: Quantity being picked up
+                - type: object
+                  required: [type, id, items]
+                  properties:
+                    type:
+                      type: string
+                      enum: [DELIVERY]
+                      description: Type of logistics request
+                    id:
+                      type: number
+                      description: Delivery reference for bulk logistics
+                    items:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          itemName:
+                            type: string
+                          quantity:
+                            type: number
+                          measurementType:
+                            type: string
+                            description: "UNIT/KG"
+                      description: Array of items being delivered
+      responses:
+        '200':
+          description: Delivery request accepted
+        '400':
+          description: Invalid delivery data
+          
+  /logistics/notification:
+    post:
+      summary: Notify an order has been delivered
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - delivery_reference
+              properties:
+                delivery_reference: 
+                  type: string
+      responses:
+        '200':
+          description: Accepted
+
+        '400':
+          description: Invalid delivery reference
