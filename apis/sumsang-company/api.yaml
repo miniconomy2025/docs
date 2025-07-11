@@ -67,9 +67,9 @@ paths:
             schema:
               type: object
               required:
-                - unixEpochStartTime
+                - epochStartTime
               properties:
-                unixEpochStartTime:
+                epochStartTime:
                   type: string
                   description: Unix epoch time of simulation start
       responses:
