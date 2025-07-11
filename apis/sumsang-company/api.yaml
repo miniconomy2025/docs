@@ -6,25 +6,28 @@ info:
     Public endpoints used for communication to SumSang Phones
 
 servers:
-  - url: https://localhost:8080/public-api
+  - url: https://sumsang-phones-api.projects.bbdgrad.com/public-api
 
 components:
   schemas:
     Order:
       type: object
       required:
+        - account_number
         - items
       properties:
+        account_number:
+          type: string
         items:
           type: array
           items:
             type: object
             required: 
-              - phoneId
+              - model
               - quantity
             properties:
-              phoneId: 
-                type: number
+              model: 
+                type: string
               quantity: 
                 type: number
 
@@ -57,10 +60,47 @@ paths:
   /simulations:
     post:
       summary: Start a new simulation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - epochStartTime
+              properties:
+                epochStartTime:
+                  type: string
+                  description: Unix epoch time of simulation start
       responses:
         '200':
           description: Simulation started
           
+  /machine-failure:
+    post:
+      summary: Break a machine random event
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - machineName
+                - failureQuantity
+              properties:
+                machineName:
+                  type: string
+                  example: cosmos_z25_machine
+                failureQuantity:
+                  type: number
+                  example: 5
+      responses:
+        '200':
+          description: Random event processed sucessfully
+        '400':
+          description: Invalid request body
+
   /stock:
     get:
       summary: Get current phone stock
@@ -82,8 +122,8 @@ paths:
             schema:
               $ref: '#/components/schemas/Order'
       responses:
-        '201':
-          description: Order placed successfully. Items reserved for 24 hours awaiting payment.
+        '200':
+          description: Order placed successfully.
           content:
             application/json:
               schema:
@@ -107,33 +147,6 @@ paths:
         '400':
           description: Invalid order data
 
-  /pop:
-    post:
-      summary: Notify that payment has been made to SumSang phones
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - reference
-                - amount
-              properties:
-                reference:
-                  type: number
-                  description: Order id
-                amount:
-                  type: number
-                  format: float
-                  description: Payment amount
-      responses:
-        '200':
-          description: Payment accepted
-        '400':
-          description: Invalid payment data
-
-
   /logistics:
     post:
       summary: Confirm delivery or pickup
@@ -142,24 +155,66 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              required:
-                - id
-                - type
-                - quantity
-              properties:
-                id:
-                  type: number
-                  description: orderId or pickuprequestId
-                type:
-                  type: string
-                  description: PICKUP/DELIVERY
-                  example: PICKUP/DELIVERY
-                quantity:
-                  type: number
-                  description: The amount being picked up or being delivered
+              oneOf:
+                - type: object
+                  required: [type, id, quantity]
+                  properties:
+                    type:
+                      type: string
+                      enum: [PICKUP]
+                      description: Type of logistics request
+                    id:
+                      type: string
+                      description: Delivery reference for consumer logistics
+                    quantity:
+                      type: number
+                      description: Quantity being picked up
+                - type: object
+                  required: [type, id, items]
+                  properties:
+                    type:
+                      type: string
+                      enum: [DELIVERY]
+                      description: Type of logistics request
+                    id:
+                      type: number
+                      description: Delivery reference for bulk logistics
+                    items:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          itemName:
+                            type: string
+                          quantity:
+                            type: number
+                          measurementType:
+                            type: string
+                            description: "UNIT/KG"
+                      description: Array of items being delivered
       responses:
         '200':
           description: Delivery request accepted
         '400':
           description: Invalid delivery data
+          
+  /logistics/notification:
+    post:
+      summary: Notify an order has been delivered
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - delivery_reference
+              properties:
+                delivery_reference: 
+                  type: string
+      responses:
+        '200':
+          description: Accepted
+
+        '400':
+          description: Invalid delivery reference

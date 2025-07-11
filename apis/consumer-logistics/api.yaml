@@ -2,6 +2,10 @@ openapi: 3.0.0
 info:
   title: Consumer Logistics API
   version: 1.0.0
+
+servers:
+  - url: https://consumer-logistics-api.projects.bbdgrad.com
+    description: Production server
 tags:
   - name: Pickup Management
     description: Endpoints related to managing pickups.
@@ -9,7 +13,52 @@ tags:
     description: Endpoints related to managing companies.
 
 paths:
-  /pickup:
+  /api/webhook/payment-updates:
+    post:
+      description: Receives payment notifications from the bank and truck fulfillment notifications from THOH.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                transaction_number:
+                  type: string
+                status:
+                  type: string
+                  description: Payment status (for pickup/invoice payments)
+                amount:
+                  type: number
+                timestamp:
+                  type: string
+                  format: date-time
+                canFulfill:
+                  type: boolean
+                  description: Indicates if the truck order can be fulfilled (for truck fulfillment)
+                truckName:
+                  type: string
+                quantity:
+                  type: integer
+                operatingCostPerDay:
+                  type: number
+                maximumLoad:
+                  type: number
+
+              required:
+                - timestamp
+      responses:
+        '200':
+          description: Notification received and processed.
+        '400':
+          description: Invalid payload or missing required fields.
+        '404':
+          description: Truck type not found.
+        '500':
+          description: Internal server error.
+  
+  
+  api/pickups:
     post:
       tags:
         - Pickup Management
@@ -24,16 +73,19 @@ paths:
                 quantity:
                   type: integer
                   example: 10
-                pickup_from:
+                companyName:
                   type: string
                   example: AbTech
-                delivery_to:
+                recipient:
                   type: string
                   example: Mazibuko
+                modelName:
+                  type: string
+                  example: "Model X"
                 
                 
       responses:
-        202:
+        201:
           description: Pickup received successfully
           content:
             application/json:
@@ -46,6 +98,9 @@ paths:
                   amount:
                     type: number
                     example: 100.0
+                  accountNumber:
+                    type: string
+                    example: "1234567890"
         400:
           description: Bad Request - Invalid input data
           content:
@@ -126,7 +181,7 @@ paths:
                     type: string
                     example: "An unexpected error occurred."
 
-  /companies:
+  api/companies:
     post:
       tags:
         - Company Management
