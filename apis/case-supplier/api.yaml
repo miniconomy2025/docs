@@ -44,11 +44,7 @@ paths:
         content:
           application/json:
             schema:
-                type: object
-                properties:
-                  quantity:
-                    type: integer
-                    example: 20
+                $ref: '#/components/schemas/PostCaseOrderRequest'
       responses:
         '201':
           description: Order created successfully
@@ -155,20 +151,7 @@ paths:
         content:
           application/json:
             schema:
-                type: object
-                properties:
-                  machineName:
-                    type: string
-                    example: "case_machine"
-                  failureQuantity:
-                    type: integer
-                    example: 2
-                  simulationDate:
-                    type: string
-                    example: "2050-01-15"
-                  simulationTime:
-                    type: string
-                    example: "14:30:45"
+              $ref: '#/components/schemas/PostMachineFailureRequest'
                   
       responses:
         200:
@@ -246,6 +229,13 @@ components:
           type: number
           example: 100.0
 
+    PostCaseOrderRequest:
+      type: object
+      properties:
+        quantity:
+          type: integer
+          example: 20
+
     PostCaseOrderResponse:
       type: object
       properties:
@@ -264,7 +254,7 @@ components:
         ordered_at:
           type: string
           example: "2025-07-06T09:35:20.819Z"
-        accountNumber:
+        account_number:
           type: string
           example: "123451234512"
 
@@ -332,3 +322,35 @@ components:
           format: decimal
           description: Amount paid in this transaction
           example: 15000.00
+
+    PostMachineFailureRequest:
+        type: object
+        properties:
+          machineName:
+            type: string
+            example: "case_machine"
+          failureQuantity:
+            type: integer
+            example: 2
+          simulationDate:
+            type: string
+            example: "2050-01-15"
+          simulationTime:
+            type: string
+            example: "14:30:45"
+
+    PostMachineFailureRequest:
+        type: object
+        properties:
+          machineName:
+            type: string
+            example: "case_machine"
+          failureQuantity:
+            type: integer
+            example: 2
+          simulationDate:
+            type: string
+            example: "2050-01-15"
+          simulationTime:
+            type: string
+            example: "14:30:45"
