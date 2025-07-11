@@ -51,3 +51,19 @@ These are the groups:
 
 - Recycler
     - Receives phones from consumers and recycles them into raw materials (copper, silicone, sand, plastic and aluminium) to re-sell to suppliers.``
+
+## All URLS
+
+| Team               | Front-end                                                      | API                                                        |
+|--------------------|----------------------------------------------------------------|------------------------------------------------------------|
+| electronics-supplier | https://electronics-supplier.projects.bbdgrad.com/           | https://electronics-supplier-api.projects.bbdgrad.com/     |
+| screen-supplier     | https://screen-supplier.projects.bbdgrad.com/                 | https://screen-supplier-api.projects.bbdgrad.com/          |
+| case-supplier       | https://case-supplier.projects.bbdgrad.com/                   | https://case-supplier-api.projects.bbdgrad.com/            |
+| bulk-logistics      | https://bulk-logistics.projects.bbdgrad.com/                  | https://bulk-logistics-api.projects.bbdgrad.com/           |
+| consumer-logistics  | https://consumer-logistics.projects.bbdgrad.com/              | https://consumer-logistics-api.projects.bbdgrad.com/       |
+| pear-company        | https://pear-company.projects.bbdgrad.com/                    | https://pear-company-api.projects.bbdgrad.com/             |
+| sumsang-phones      | https://sumsang-phones.projects.bbdgrad.com/                  | https://sumsang-phones-api.projects.bbdgrad.com/           |
+| commercial-bank     | https://commercial-bank.projects.bbdgrad.com/                 | https://commercial-bank-api.projects.bbdgrad.com/          |
+| retail-bank         | https://retail-bank.projects.bbdgrad.com/                     | https://retail-bank-api.projects.bbdgrad.com/              |
+| thoh                | https://thoh.projects.bbdgrad.com/                            | https://thoh-api.projects.bbdgrad.com/                     |
+| recycler            | https://recycler.projects.bbdgrad.com/                        | https://recycler-api.projects.bbdgrad.com/                 |
