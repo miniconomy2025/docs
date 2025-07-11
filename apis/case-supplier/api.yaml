@@ -324,33 +324,17 @@ components:
           example: 15000.00
 
     PostMachineFailureRequest:
-        type: object
-        properties:
-          machineName:
-            type: string
-            example: "case_machine"
-          failureQuantity:
-            type: integer
-            example: 2
-          simulationDate:
-            type: string
-            example: "2050-01-15"
-          simulationTime:
-            type: string
-            example: "14:30:45"
-
-    PostMachineFailureRequest:
-        type: object
-        properties:
-          machineName:
-            type: string
-            example: "case_machine"
-          failureQuantity:
-            type: integer
-            example: 2
-          simulationDate:
-            type: string
-            example: "2050-01-15"
-          simulationTime:
-            type: string
-            example: "14:30:45"
+      type: object
+      properties:
+        machineName:
+          type: string
+          example: "case_machine"
+        failureQuantity:
+          type: integer
+          example: 2
+        simulationDate:
+          type: string
+          example: "2050-01-15"
+        simulationTime:
+          type: string
+          example: "14:30:45"
