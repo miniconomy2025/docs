@@ -6,7 +6,7 @@ info:
     Commercial bank API for managing accounts, transactions, and loans.
 
 servers:
-  - url: https://localhost:8080
+  - url: https://commercial-bank-api.projects.bbdgrad.com/api
 
 components:
   schemas:
@@ -29,6 +29,7 @@ components:
         timestamp:
           type: number
           format: float
+          description: Simulation time when the transaction occurred
     TransactionNotification:
       type: object
       properties:
@@ -41,6 +42,7 @@ components:
         timestamp:
           type: number
           format: float
+          description: Simulation time when the transaction occurred
         description:
           type: string
         to:
@@ -59,6 +61,7 @@ components:
         started_at:
           type: number
           format: float
+          description: Simulation time when the loan started
         write_off:
           type: boolean
         outstanding_amount:
@@ -69,6 +72,7 @@ components:
         timestamp:
           type: number
           format: float
+          description: Simulation time when the payment was made
         amount:
           type: number
         is_interest:
@@ -198,7 +202,7 @@ paths:
           "transaction_number": "string",
           "status": "string",
           "amount": 123.45,
-          "timestamp": 3.507,
+          "timestamp": 3.507, // simulation time
           "description": "string",
           "from": "sender_account_number",
           "to": "recipient_account_number"
@@ -248,12 +252,14 @@ paths:
           schema:
             type: number
             format: float
+            description: Simulation time (start)
         - name: to
           in: query
           required: true
           schema:
             type: number
             format: float
+            description: Simulation time (end)
         - name: only_successful
           in: query
           required: false
@@ -375,13 +381,14 @@ paths:
                     type: string
                   initial_amount:
                     type: number
-                  outstanding:
+                  outstanding_amount:
                     type: number
                   interest_rate:
                     type: number
                   started_at:
                     type: number
                     format: float
+                    description: Simulation time when the loan started
                   write_off:
                     type: boolean
                   payments:
@@ -428,6 +435,7 @@ paths:
                 timestamp:
                   type: number
                   format: float
+                  description: Simulation time when the transfer was initiated
       responses:
         '200':
           description: Notification accepted
@@ -439,9 +447,7 @@ paths:
                   success:
                     type: boolean
                     example: true
-                  message:
-                    type: string
-                    example: Transfer recorded successfully.
+
         '400':
           description: Validation or processing error
           content:
@@ -454,7 +460,7 @@ paths:
                     example: false
                   error:
                     type: string
-                    example: Unknown recipient account.
+                    example: unknown_recipient_account
         '409':
           description: Duplicate transaction number
           content:
@@ -467,4 +473,4 @@ paths:
                     example: false
                   error:
                     type: string
-                    example: Transaction number already exists.
+                    example: transaction_number_already_exists
