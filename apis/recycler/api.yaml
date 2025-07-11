@@ -1,105 +1,116 @@
-openapi: 3.0.0
+openapi: 3.0.1
 info:
-  title: Recycler API for Economic Simulator
+  title: Recycler.API | v1
   version: 1.0.0
-  description: >
-    API for simulating recycling operations in a mini economy.
-    Includes phone recycling, raw material tracking, supplier orders, and company registration.
-
 paths:
-  
-  /Materials:
-      get:
-        summary: Get list of available materials
-        operationId: getMaterials
-        responses:
-          '200':
-            description: A list of available materials
-            content:
-              application/json:
-                schema:
-                  type: array
-                  items:
-                    $ref: '#/components/schemas/MaterialDto'
-          '500':
-            description: Internal server error
-  
-  
-  /orders:
-    post:
-      summary: Create a raw materials order
-      description: Allows a supplier to create an order for specific raw materials.
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                companyName:
-                  type: string
-                orderItems:
-                  type: array
-                  items:
-                    type: object
-                    properties:
-                      rawMaterialName:
-                        type: string
-                      quantityInKg:
-                        type: number
-              required:
-                - supplierId
-                - items
+  /Log:
+    get:
+      tags:
+        - Log
+      parameters:
+        - name: MaxReceivedLogId
+          in: query
+          schema:
+            type: integer
+            format: int32
       responses:
-        '201':
-          description: Order created successfully
+        '200':
+          description: OK
           content:
+            text/plain:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Log'
             application/json:
               schema:
-                type: object
-                properties:
-                  data:
-                    $ref: '#/components/schemas/Order'
-                  isSuccess:
-                    type: boolean
-                  message:
-                    type: string
-                  timeStamp:
-                    type: string
-
+                type: array
+                items:
+                  $ref: '#/components/schemas/Log'
+            text/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Log'
+  /Orders:
     get:
-      summary: Get order by id
+      tags:
+        - Orders
       parameters:
         - name: id
           in: query
-          description: Filter orders by status name
-          required: true
           schema:
-           type: integer
-
-      description: Retrieves order by it's id
+            type: integer
+            format: int32
       responses:
         '200':
-          description: Order with details
+          description: OK
           content:
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/GenericResponseOfOrderDto'
             application/json:
               schema:
-                type: object
-                properties:
-                  data:
-                    $ref: '#/components/schemas/Order'
-                  isSuccess:
-                    type: boolean
-                  message:
-                    type: string
-                  timeStamp:
-                    type: string
-                    format: date-time
-
-  /orders/{orderNumber}:
+                $ref: '#/components/schemas/GenericResponseOfOrderDto'
+            text/json:
+              schema:
+                $ref: '#/components/schemas/GenericResponseOfOrderDto'
+        '404':
+          description: Not Found
+          content:
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+            text/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+    post:
+      tags:
+        - Orders
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateOrderCommand'
+          text/json:
+            schema:
+              $ref: '#/components/schemas/CreateOrderCommand'
+          application/*+json:
+            schema:
+              $ref: '#/components/schemas/CreateOrderCommand'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/GenericResponseOfOrderDto'
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericResponseOfOrderDto'
+            text/json:
+              schema:
+                $ref: '#/components/schemas/GenericResponseOfOrderDto'
+        '404':
+          description: Not Found
+          content:
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+            text/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+  /Orders/{orderNumber}:
     get:
-      summary: View specific order by order number
-      description: Retrieves a single order's details by its order number.
+      tags:
+        - Orders
       parameters:
         - name: orderNumber
           in: path
@@ -109,347 +120,566 @@ paths:
             format: uuid
       responses:
         '200':
-          description: Order details
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  data:
-                    $ref: '#/components/schemas/Order'
-                  isSuccess:
-                    type: boolean
-                  message:
-                    type: string
-                  timeStamp:
-                    type: string
-                    format: date-time
-  
-  /api/BankNotification:
-      post:
-        summary: To receive a bank transaction notification
-        operationId: postBankNotification
-        requestBody:
-          required: true
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  transaction_number:
-                    type: string
-                  status:
-                    type: string
-                  amount:
-                    type: number
-                    format: float
-                  timestamp:
-                    type: integer
-                    format: int64
-                  description:
-                    type: string
-                  from:
-                    type: string
-                  to:
-                    type: string
-                required:
-                  - transaction_number
-                  - status
-                  - amount
-                  - timestamp
-                  - description
-                  - from
-                  - to
-        responses:
-          '200':
-            description: Request processed successfully (equivalent to Ok())
-          '500':
-            description: Internal error processing payment
-            content:
-              application/json:
-                schema:
-                  type: object
-                  properties:
-                    statusCode:
-                      type: integer
-                      example: 500
-                    message:
-                      type: string
-                      example: Internal error processing payment
-
-  /logistics:
-      post:
-        summary: To receive a logistics event
-        operationId: postLogistics
-        requestBody:
-          required: true
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  id:
-                    type: string
-                    example: "LOG123"
-                  type:
-                    type: string
-                    example: "delivery"
-                  items:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        name:
-                          type: string
-                          example: "Plastic Bottles"
-                        quantity:
-                          type: integer
-                          example: 100
-                      required:
-                        - name
-                        - quantity
-                required:
-                  - id
-                  - type
-                  - items
-        responses:
-          '200':
-            description: Logistics event processed successfully
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/LogisticsResponseDto'
-          '500':
-            description: Internal server error while processing logistics event
-            content:
-              application/json:
-                schema:
-                  type: object
-                  properties:
-                    message:
-                      type: string
-                      example: An internal server error occurred while processing the logistics event.
-                    details:
-                      type: string
-                      example: 'System.NullReferenceException: Object reference not set to an instance of an object.'
-
-  /api/Logistics/consumer-deliveries:
-    post:
-      summary: Submit consumer delivery logistics
-      operationId: postConsumerDeliveries
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                status:
-                  type: string
-                  example: "delivered"
-                modelName:
-                  type: string
-                  example: "EcoBin 3000"
-                quantity:
-                  type: integer
-                  example: 5
-              required:
-                - status
-                - modelName
-                - quantity
-      responses:
-        '200':
-          description: Consumer delivery processed successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ConsumerLogisticsDeliveryResponseDto'
-        '400':
-          description: Bad request – invalid input
-        '500':
-          description: Internal server error while processing consumer delivery
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: An internal server error occurred while processing the logistics event.
-                  details:
-                    type: string
-                    example: 'System.Exception: Unexpected null reference.'
-
-  /recycler/notifyme:
-    post:
-      summary: To get notified from The Hand about available phones
-      operationId: notifyAvailablePhones
-      requestBody:
-        description: No request body required
-        required: false
-        content: { }
-      responses:
-        '200':
-          description: Notification processed successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: Phones are available.
-                  results:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        modelName:
-                          type: string
-                          example: EPhone X
-                        status:
-                          type: string
-                          example: Failed
-                        error:
-                          type: string
-                          example: Failed to parse delivery order response.
-                      required:
-                        - modelName
-                        - status
-                        - error
-        '400':
-          description: No recycled phones received from THoH
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: No recycled phones received from THoH.
-        '500':
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: An unexpected error occurred.
-                  details:
-                    type: string
-                    example: 'System.Exception: Something went wrong during processing.'
-
-  /Simulation:
-    post:
-      summary: Start simulation
-      operationId: startSimulation
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                startTime:
-                  type: integer
-                  example: 1625247600
-              required:
-                  - startTime
-      responses:
-        '200':
-          description: Simulation started successfully
+          description: OK
           content:
             text/plain:
               schema:
-                type: object
-                properties:
-                  status:
-                    type: string
-                    example: "success"
-                  message:
-                    type: string
-                    example: "Simulation started at 1625247600"
-        '400':
-          description: Bad request – invalid input
-          content:
+                $ref: '#/components/schemas/GenericResponseOfOrderDto'
             application/json:
               schema:
-                type: object
-                properties:
-                  type:
-                    type: string
-                    example: "https://tools.ietf.org/html/rfc7231#section-6.5.1"
-                  title:
-                    type: string
-                    example: "One or more validation errors occurred."
-                  status:
-                    type: integer
-                    example: 400
-                  detail:
-                    type: string
-                    example: "The startTime field is required."
-                  instance:
-                    type: string
-                    example: "/Simulation"
-        '500':
-          description: Internal server error
+                $ref: '#/components/schemas/GenericResponseOfOrderDto'
+            text/json:
+              schema:
+                $ref: '#/components/schemas/GenericResponseOfOrderDto'
+        '404':
+          description: Not Found
           content:
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/NotFound'
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: "An unexpected error occurred while starting the simulation."
-
-  /machine-failure:
+                $ref: '#/components/schemas/NotFound'
+            text/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+  /api/BankNotification:
     post:
-      summary: Report a machine failure
-      operationId: reportMachineFailure
+      tags:
+        - BankNotification
       requestBody:
-        required: true
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                machineName:
-                  type: string
-                  example: "electronics_machine"
-                failureQuantity:
-                  type: integer
-                  example: 5
-                simulationDate:
-                  type: string
-                  format: date
-                  example: "2050-01-15"
-                simulationTime:
-                  type: string
-                  format: time
-                  example: "14:30:45"
-              required:
-                - machineName
-                - failureQuantity
-                - simulationDate
-                - simulationTime
+              $ref: '#/components/schemas/BankNotificationDto'
+          text/json:
+            schema:
+              $ref: '#/components/schemas/BankNotificationDto'
+          application/*+json:
+            schema:
+              $ref: '#/components/schemas/BankNotificationDto'
+        required: true
       responses:
         '200':
-          description: Machine failure reported successfully
+          description: OK
+  /api/Companies:
+    post:
+      tags:
+        - Companies
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCompanyCommand'
+          text/json:
+            schema:
+              $ref: '#/components/schemas/CreateCompanyCommand'
+          application/*+json:
+            schema:
+              $ref: '#/components/schemas/CreateCompanyCommand'
+        required: true
+      responses:
+        '201':
+          description: Created
+          content:
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/CreateCompanyResponse'
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateCompanyResponse'
+            text/json:
+              schema:
+                $ref: '#/components/schemas/CreateCompanyResponse'
+  /logistics:
+    post:
+      tags:
+        - Logistics
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LogisticsRequestDto'
+          text/json:
+            schema:
+              $ref: '#/components/schemas/LogisticsRequestDto'
+          application/*+json:
+            schema:
+              $ref: '#/components/schemas/LogisticsRequestDto'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/LogisticsResponseDto'
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LogisticsResponseDto'
+            text/json:
+              schema:
+                $ref: '#/components/schemas/LogisticsResponseDto'
         '400':
-          description: Bad request – invalid input
+          description: Bad Request
+          content:
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+            text/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
         '500':
-          description: Internal server error
-
-
+          description: Internal Server Error
+  /api/Logistics/consumer-deliveries:
+    post:
+      tags:
+        - Logistics
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConsumerLogisticsDeliveryNotificationRequestDto'
+          text/json:
+            schema:
+              $ref: '#/components/schemas/ConsumerLogisticsDeliveryNotificationRequestDto'
+          application/*+json:
+            schema:
+              $ref: '#/components/schemas/ConsumerLogisticsDeliveryNotificationRequestDto'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/ConsumerLogisticsDeliveryResponseDto'
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConsumerLogisticsDeliveryResponseDto'
+            text/json:
+              schema:
+                $ref: '#/components/schemas/ConsumerLogisticsDeliveryResponseDto'
+        '400':
+          description: Bad Request
+          content:
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+            text/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '500':
+          description: Internal Server Error
+  /machine-payment-confirmation:
+    post:
+      tags:
+        - MachinePaymentConfirmation
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MachinePaymentConfirmationDto'
+          text/json:
+            schema:
+              $ref: '#/components/schemas/MachinePaymentConfirmationDto'
+          application/*+json:
+            schema:
+              $ref: '#/components/schemas/MachinePaymentConfirmationDto'
+        required: true
+      responses:
+        '200':
+          description: OK
+  /api/Machines/receive:
+    post:
+      tags:
+        - Machines
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReceiveMachineCommand'
+          text/json:
+            schema:
+              $ref: '#/components/schemas/ReceiveMachineCommand'
+          application/*+json:
+            schema:
+              $ref: '#/components/schemas/ReceiveMachineCommand'
+        required: true
+      responses:
+        '201':
+          description: Created
+          content:
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/ReceivedMachineDto'
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReceivedMachineDto'
+            text/json:
+              schema:
+                $ref: '#/components/schemas/ReceivedMachineDto'
+        '400':
+          description: Bad Request
+          content:
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+            text/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+  /api/Machines:
+    get:
+      tags:
+        - Machines
+      responses:
+        '200':
+          description: OK
+          content:
+            text/plain:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ReceivedMachineDto'
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ReceivedMachineDto'
+            text/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ReceivedMachineDto'
+  /Materials:
+    get:
+      tags:
+        - Materials
+      responses:
+        '200':
+          description: OK
+          content:
+            text/plain:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RawMaterialDto'
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RawMaterialDto'
+            text/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RawMaterialDto'
+  /recycler/notifyme:
+    post:
+      tags:
+        - Notifications
+      responses:
+        '200':
+          description: OK
+  /machine-failure:
+    post:
+      tags:
+        - Notifications
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetNotificationOfMachineFailureCommand'
+          text/json:
+            schema:
+              $ref: '#/components/schemas/GetNotificationOfMachineFailureCommand'
+          application/*+json:
+            schema:
+              $ref: '#/components/schemas/GetNotificationOfMachineFailureCommand'
+        required: true
+      responses:
+        '200':
+          description: OK
+  /internal/revenue/company-orders:
+    get:
+      tags:
+        - Revenue
+      responses:
+        '200':
+          description: OK
+          content:
+            text/plain:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RevenueReportDto'
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RevenueReportDto'
+            text/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RevenueReportDto'
+  /Simulation:
+    post:
+      tags:
+        - Simulation
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StartSimulationCommand'
+          text/json:
+            schema:
+              $ref: '#/components/schemas/StartSimulationCommand'
+          application/*+json:
+            schema:
+              $ref: '#/components/schemas/StartSimulationCommand'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/StartSimulationResponse'
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StartSimulationResponse'
+            text/json:
+              schema:
+                $ref: '#/components/schemas/StartSimulationResponse'
+        '400':
+          description: Bad Request
+          content:
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+            text/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '500':
+          description: Internal Server Error
+  /internal/stock:
+    get:
+      tags:
+        - Stock
+      responses:
+        '200':
+          description: OK
+          content:
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/StockSet'
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StockSet'
+            text/json:
+              schema:
+                $ref: '#/components/schemas/StockSet'
 components:
   schemas:
-    Order:
+    BankNotificationDto:
+      type: object
+      properties:
+        transaction_number:
+          type: string
+        status:
+          type: string
+        amount:
+          type: number
+          format: double
+        timestamp:
+          type: number
+          format: double
+        description:
+          type: string
+        from:
+          type: string
+        to:
+          type: string
+    ConsumerLogisticsDeliveryNotificationRequestDto:
+      type: object
+      properties:
+        status:
+          type: string
+        modelName:
+          type: string
+        quantity:
+          type: integer
+          format: int32
+    ConsumerLogisticsDeliveryResponseDto:
+      required:
+        - accountNumber
+      type: object
+      properties:
+        referenceNo:
+          type: string
+          format: uuid
+        amount:
+          type: number
+          format: double
+        accountNumber:
+          type: string
+    CreateCompanyCommand:
+      type: object
+      properties:
+        name:
+          type: string
+          nullable: true
+        roleId:
+          type: integer
+          format: int32
+        keyId:
+          type: integer
+          format: int32
+          nullable: true
+    CreateCompanyResponse:
+      type: object
+      properties:
+        companyId:
+          type: integer
+          format: int32
+        companyNumber:
+          type: string
+          format: uuid
+        name:
+          type: string
+          nullable: true
+        role:
+          type: string
+          nullable: true
+    CreateOrderCommand:
+      required:
+        - companyName
+        - orderItems
+      type: object
+      properties:
+        companyName:
+          type: string
+        orderItems:
+          type: array
+          items:
+            $ref: '#/components/schemas/CreateOrderItemDto'
+    CreateOrderItemDto:
+      type: object
+      properties:
+        rawMaterialName:
+          type: string
+        quantityInKg:
+          type: integer
+          format: int32
+    GenericResponseOfOrderDto:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/OrderDto'
+        isSuccess:
+          type: boolean
+        message:
+          type: string
+          nullable: true
+        timeStamp:
+          type: string
+          format: date-time
+    GetNotificationOfMachineFailureCommand:
+      type: object
+      properties:
+        machineName:
+          type: string
+          nullable: true
+        failureQuantity:
+          type: integer
+          format: int32
+        simulationDate:
+          type: string
+          format: date-time
+        simulationTime:
+          type: string
+    Log:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int32
+        requestSource:
+          type: string
+        requestEndpoint:
+          type: string
+        requestBody:
+          type: string
+        response:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+    LogisticsItemDto:
+      type: object
+      properties:
+        name:
+          type: string
+          nullable: true
+        quantity:
+          type: integer
+          format: int32
+    LogisticsRequestDto:
+      type: object
+      properties:
+        id:
+          type: string
+          nullable: true
+        type:
+          type: string
+          nullable: true
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/LogisticsItemDto'
+          nullable: true
+    LogisticsResponseDto:
+      type: object
+      properties:
+        message:
+          type: string
+          nullable: true
+        logisticsRecordId:
+          type: string
+          nullable: true
+    MachinePaymentConfirmationDto:
+      type: object
+      properties:
+        orderId:
+          type: string
+        totalWeight:
+          type: number
+          format: double
+    NotFound:
+      type: object
+      properties:
+        statusCode:
+          type: integer
+          format: int32
+    OrderDto:
       type: object
       properties:
         orderId:
           type: integer
+          format: int32
         orderNumber:
           type: string
           format: uuid
@@ -460,91 +690,185 @@ components:
           format: date-time
         companyId:
           type: integer
+          format: int32
         orderExpiresAt:
           type: string
           format: date-time
         orderItems:
           type: array
           items:
-            $ref: '#/components/schemas/OrderItem'
+            $ref: '#/components/schemas/OrderItemDto'
         accountNumber:
           type: string
-
-    OrderStatus:
-      type: object
-      properties:
-        id:
-          type: integer
-        name:
-          type: string
-
-    OrderItem:
+      nullable: true
+    OrderItemDto:
       type: object
       properties:
         rawMaterial:
           $ref: '#/components/schemas/RawMaterial'
         quantityInKg:
-          type: number
+          type: integer
+          format: int32
         pricePerKg:
           type: number
-
+          format: double
+    OrderStatus:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int32
+        name:
+          type: string
+          nullable: true
+      nullable: true
+    ProblemDetails:
+      type: object
+      properties:
+        type:
+          type: string
+          nullable: true
+        title:
+          type: string
+          nullable: true
+        status:
+          type: integer
+          format: int32
+          nullable: true
+        detail:
+          type: string
+          nullable: true
+        instance:
+          type: string
+          nullable: true
     RawMaterial:
       type: object
       properties:
         id:
           type: integer
+          format: int32
         name:
           type: string
+          nullable: true
         pricePerKg:
           type: number
-          
-          
-    LogisticsResponseDto:
-          type: object
-          properties:
-            message:
-              type: string
-              example: Logistics event recorded successfully.
-            logisticsRecordId:
-              type: string
-              example: "LOG-20250710-001"
-
-    ConsumerLogisticsDeliveryResponseDto:
-          type: object
-          properties:
-            referenceNo:
-              type: string
-              format: uuid
-              example: "3fa85f64-5717-4562-b3fc-2c963f66afa6"
-            amount:
-              type: number
-              format: decimal
-              example: 250.75
-            accountNumber:
-              type: string
-              example: "ACC123456789"
-          required:
-            - referenceNo
-            - amount
-            - accountNumber
-    
-    MaterialDto:
+          format: double
+    RawMaterialDto:
+      required:
+        - name
       type: object
       properties:
         name:
           type: string
-          example: "Aluminum"
         availableQuantityInKg:
           type: number
-          format: float
-          example: 1200.5
+          format: double
         pricePerKg:
           type: number
-          format: float
-          example: 5.75
+          format: double
+    ReceivedMachineDto:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int32
+        machineId:
+          type: integer
+          format: int32
+        receivedAt:
+          type: string
+          format: date-time
+        isOperational:
+          type: boolean
+    ReceiveMachineCommand:
+      type: object
+      properties:
+        machineId:
+          type: integer
+          format: int32
+    RevenueOrderItemDto:
       required:
-        - name
-        - availableQuantityInKg
-        - pricePerKg
-
-
+        - materialName
+      type: object
+      properties:
+        materialName:
+          type: string
+        quantityKg:
+          type: integer
+          format: int32
+        totalPrice:
+          type: number
+          format: double
+    RevenueReportDto:
+      required:
+        - companyName
+        - orderNumber
+        - status
+        - items
+      type: object
+      properties:
+        companyName:
+          type: string
+        orderNumber:
+          type: string
+        status:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/RevenueOrderItemDto'
+        companyTotalOrders:
+          type: number
+          format: double
+    StartSimulationCommand:
+      type: object
+      properties:
+        epochStartTime:
+          type: integer
+          format: int64
+          nullable: true
+    StartSimulationResponse:
+      type: object
+      properties:
+        status:
+          type: string
+        message:
+          type: string
+    StockItem:
+      type: object
+      properties:
+        name:
+          type: string
+        quantity:
+          type: integer
+          format: int32
+        unit:
+          type: string
+    StockSet:
+      type: object
+      properties:
+        rawMaterials:
+          type: array
+          items:
+            $ref: '#/components/schemas/StockItem'
+          nullable: true
+        phones:
+          type: array
+          items:
+            $ref: '#/components/schemas/#/properties/rawMaterials/items'
+tags:
+  - name: Log
+  - name: Orders
+  - name: BankNotification
+  - name: Companies
+  - name: Logistics
+  - name: MachinePaymentConfirmation
+  - name: Machines
+  - name: Materials
+  - name: Notifications
+  - name: Revenue
+  - name: Simulation
+  - name: Stock
