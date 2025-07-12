@@ -173,7 +173,7 @@ paths:
         '200':
           description: Simulation started
           
-  /machine/failure:
+  /machines/failure:
     post:
       summary: Break a machine random event
       requestBody:
