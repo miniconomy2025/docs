@@ -2,7 +2,7 @@ openapi: 3.0.0
 info:
   title: Bulk Logistics API
   version: 1.0.0
-  description: API for managing pickup requests and other resources. Keep in mind that at the time, we are using id's as input parameters. In future, we expect to use the sub within your certificate for operations involving your identity. Additionally, we will expect company names in their kebab case format on the github repos (bulk-logistics, case-supplier, etc).
+  description: API for managing pickup requests for B2B logstics 
 servers:
   - url: https://bulk-logistics-api.projects.bbdgrad.com
 tags:
