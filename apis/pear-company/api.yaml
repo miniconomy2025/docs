@@ -149,6 +149,7 @@ components:
                 type: number
               measurementType:
                 type: string
+                enum: [KG, UNIT]
                 description: "UNIT/KG"
           description: Array of items being delivered
 
