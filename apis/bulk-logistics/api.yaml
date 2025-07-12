@@ -2,14 +2,16 @@ openapi: 3.0.0
 info:
   title: Bulk Logistics API
   version: 1.0.0
-  description: API for managing pickup requests for B2B logstics 
+  description: API for managing pickup requests for B2B logstics
 servers:
   - url: https://bulk-logistics-api.projects.bbdgrad.com
 tags:
   - name: Pickup Requests
     description: Operations related to pickup requests
   - name: Hand (🤚) Events
+    description: Manually triggered simulation events.
   - name: Bank
+    description: Endpoints related to bank interactions.
 
 paths:
   /api/pickup-request:
@@ -147,7 +149,7 @@ paths:
       description: Stop the simulation
       responses:
         '200':
-          description: Successfully stopped simulation 
+          description: Successfully stopped simulation
           content:
             application/json:
               schema:
@@ -205,13 +207,13 @@ components:
     # ENUM DEFINITIONS
     PickupRequestStatusEnum:
       type: string
-      enum: 
+      enum:
         - PENDING_DELIVERY
         - PENDING_PAYMENT
         - DELIVERED
     PickupRequestStatusPendingEnum:
       type: string
-      enum: 
+      enum:
         - PENDING_PAYMENT
     OriginCompanyEnum:
       type: string
@@ -261,6 +263,12 @@ components:
       type: string
       enum:
         - COMPLETED
+    MeasurementTypeEnum:
+      type: string
+      description: The unit of measure for an item.
+      enum:
+        - KG
+        - UNIT
 
     # REQUEST/RESPONSE SCHEMAS
     BankNotificationRequest:
@@ -337,17 +345,12 @@ components:
         orderId:
           type: number
         itemName:
-          type: string
-          enum:
-            - small_truck
-            - medium_truck
-            - large_truck
+          $ref: '#/components/schemas/TruckNameEnum'
         quantity:
           type: number
         totalPrice:
           type: number
         status:
-          type: string
           $ref: '#/components/schemas/TruckDeliveryRequestStatusEnum'
         message:
           type: string
@@ -403,12 +406,6 @@ components:
           $ref: '#/components/schemas/ItemNameEnum'
         quantity:
           type: number
-        type:
-          type: string
-          description: The unit of measure for the items in the request.
-          enum:
-            - KG
-            - UNIT
       description: Represents an item in the pickup request.
     PickupRequestCreateResponse:
       type: object
@@ -423,7 +420,6 @@ components:
           type: string
           description: Can be a string or number.
         status:
-          type: string
           $ref: '#/components/schemas/PickupRequestStatusPendingEnum'
         statusCheckUrl:
           type: string
