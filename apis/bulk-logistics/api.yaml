@@ -9,6 +9,8 @@ servers:
 tags:
   - name: Pickup Requests
     description: Operations related to pickup requests
+  - name: Hand (🤚) Events
+  - name: Bank
 
 paths:
   /api/pickup-request:
@@ -85,7 +87,7 @@ paths:
           name: companyName
           required: true
           schema:
-            type: string
+            $ref: '#/components/schemas/DestinationCompanyEnum'
           description: Name of the company to retrieve pickup requests for.
       responses:
         '200':
@@ -138,6 +140,23 @@ paths:
       responses:
         '204':
           description: Successful delivery of truck/s
+  /api/simulation/stop:
+    delete:
+      tags:
+        - Hand (🤚) Events
+      summary: Stop the simulation
+      description: Stop the simulation
+      responses:
+        '200':
+          description: Successfully stopped simulation 
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Successfully stopped simulation"
   /api/simulation:
     post:
       tags:
@@ -145,12 +164,12 @@ paths:
       summary: Start the simulation with Unix epoch timestamp
       description: |
         Initialize and start the simulation time system.
-        
+
         **Time System:**
         - Accepts Unix epoch timestamp for synchronization
         - 2 real minutes = 1 simulation day
         - Simulation date starts at 2050-01-01
-        - Daily production cycles run automatically
+        - System will run autonomously from then on.
       requestBody:
         required: true
         content:
@@ -169,7 +188,7 @@ paths:
   /api/bank:
     post:
       tags:
-       - Bank
+        - Bank
       summary: Notification endpoint for the commercial bank.
       description: The commercial bank will use this endpoint to send notifications about payments to bulk logistics.
       requestBody:
@@ -181,8 +200,70 @@ paths:
       responses:
         '200':
           description: Notification received successfully
+
 components:
   schemas:
+    # ENUM DEFINITIONS
+    PickupRequestStatusEnum:
+      type: string
+      enum: 
+        - PENDING_DELIVERY
+        - PENDING_PAYMENT
+        - DELIVERED
+    PickupRequestStatusPendingEnum:
+      type: string
+      enum: 
+        - PENDING_PAYMENT
+    OriginCompanyEnum:
+      type: string
+      enum:
+        - recycler
+        - electronics-supplier
+        - screen-supplier
+        - case-supplier
+        - thoh
+    DestinationCompanyEnum:
+      type: string
+      enum:
+        - electronics-supplier
+        - screen-supplier
+        - case-supplier
+        - pear-company
+        - sumsang-company
+        - recycler
+    ItemNameEnum:
+      type: string
+      enum:
+        - copper
+        - silicon
+        - sand
+        - aluminium
+        - plastic
+        - electronics_machine
+        - ephone_machine
+        - ephone_plus_machine
+        - ephone_pro_max_machine
+        - cosmos_z25_machine
+        - cosmos_z25_ultra_machine
+        - cosmos_z25_fe_machine
+        - case_machine
+        - screen_machine
+        - recycling_machine
+        - electronics
+        - cases
+        - screens
+    TruckNameEnum:
+      type: string
+      enum:
+        - small_truck
+        - medium_truck
+        - large_truck
+    TruckDeliveryRequestStatusEnum:
+      type: string
+      enum:
+        - COMPLETED
+
+    # REQUEST/RESPONSE SCHEMAS
     BankNotificationRequest:
       type: object
       required:
@@ -194,7 +275,7 @@ components:
         - from
         - to
       properties:
-        transaction_number: 
+        transaction_number:
           type: string
         status:
           type: string
@@ -208,7 +289,6 @@ components:
           type: string
         to:
           type: string
-
     SimulationStartRequest:
       type: object
       required:
@@ -219,7 +299,6 @@ components:
           format: int64
           description: Unix timestamp when simulation should start
           example: 1735826400
-  
     SimulationStartResponse:
       type: object
       properties:
@@ -231,7 +310,7 @@ components:
           example: "Simulation started successfully"
         startedAt:
           type: string
-          format: date-time
+          format: date
           description: When simulation started (ISO format)
           example: "2025-01-02T12:00:00+00:00"
         currentDay:
@@ -240,7 +319,7 @@ components:
           example: 0
         simulationDateTime:
           type: string
-          format: date-time
+          format: date
           description: Current simulation date/time
           example: "2050-01-01T00:00:00"
     TruckDeliveryRequest:
@@ -260,12 +339,17 @@ components:
           type: number
         itemName:
           type: string
+          enum:
+            - small_truck
+            - medium_truck
+            - large_truck
         quantity:
           type: number
         totalPrice:
           type: number
         status:
           type: string
+          $ref: '#/components/schemas/TruckDeliveryRequestStatusEnum'
         message:
           type: string
         canFulfill:
@@ -283,13 +367,15 @@ components:
         - simulationTime
       properties:
         truckName:
-          type: string
+          $ref: '#/components/schemas/TruckNameEnum'
         failureQuantity:
           type: number
         simulationDate:
           type: string
+          format: date
         simulationTime:
           type: string
+          format: date
     PickupRequestRequest:
       type: object
       required:
@@ -301,9 +387,9 @@ components:
         originalExternalOrderId:
           type: string
         originCompany:
-          type: string
+          $ref: '#/components/schemas/OriginCompanyEnum'
         destinationCompany:
-          type: string
+          $ref: '#/components/schemas/DestinationCompanyEnum'
         items:
           type: array
           items:
@@ -315,9 +401,15 @@ components:
         - quantity
       properties:
         itemName:
-          type: string
+          $ref: '#/components/schemas/ItemNameEnum'
         quantity:
           type: number
+        type:
+          type: string
+          description: The unit of measure for the items in the request.
+          enum:
+            - KG
+            - UNIT
       description: Represents an item in the pickup request.
     PickupRequestCreateResponse:
       type: object
@@ -333,6 +425,7 @@ components:
           description: Can be a string or number.
         status:
           type: string
+          $ref: '#/components/schemas/PickupRequestStatusPendingEnum'
         statusCheckUrl:
           type: string
     GetPickupRequestResponse:
@@ -343,14 +436,14 @@ components:
         cost:
           type: number
         status:
-          type: string
+          $ref: '#/components/schemas/PickupRequestStatusEnum'
         originCompanyName:
-          type: string
+          $ref: '#/components/schemas/OriginCompanyEnum'
         originalExternalOrderId:
           type: string
         requestDate:
           type: string
-          format: date-time
+          format: date
         items:
           type: array
           items:
