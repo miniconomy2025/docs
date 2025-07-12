@@ -155,7 +155,7 @@ components:
 
 
 paths:
-  /simulations:
+  /simulation:
     post:
       summary: Start a new simulation
       requestBody:
@@ -173,6 +173,21 @@ paths:
       responses:
         '200':
           description: Simulation started
+    
+    delete:
+      summary: Stops the simulation
+      description: Stops the simulation for our server
+      responses:
+        200:
+          description: Successfully stopped simulation 
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Successfully stopped simulation"
           
   /machines/failure:
     post:
