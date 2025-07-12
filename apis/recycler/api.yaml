@@ -38,6 +38,9 @@ paths:
               properties:
                 companyName:
                   type: string
+                  enum: [electronics_supplier,
+                         screen_supplier,
+                         case_supplier]
                 orderItems:
                   type: array
                   items:
@@ -45,11 +48,17 @@ paths:
                     properties:
                       rawMaterialName:
                         type: string
+                        enum: [Copper
+                               Silicon,
+                               Sand,
+                               Plastic,
+                               Aluminum]
                       quantityInKg:
-                        type: number
+                        type: integer
+                        minimum: 1000
               required:
-                - supplierId
-                - items
+                - companyName
+                - orderItems
       responses:
         '201':
           description: Order created successfully
@@ -66,6 +75,7 @@ paths:
                     type: string
                   timeStamp:
                     type: string
+                    format: date-time
 
     get:
       summary: Get order by id
@@ -76,6 +86,7 @@ paths:
           required: true
           schema:
            type: integer
+           minimum: 1
 
       description: Retrieves order by it's id
       responses:
@@ -162,7 +173,7 @@ paths:
                   - to
         responses:
           '200':
-            description: Request processed successfully (equivalent to Ok())
+            description: Request processed successfully
           '500':
             description: Internal error processing payment
             content:
@@ -189,11 +200,10 @@ paths:
                 type: object
                 properties:
                   id:
-                    type: string
-                    example: "LOG123"
+                    type: integer
                   type:
                     type: string
-                    example: "delivery"
+                    enum: [ PICKUP, DELIVERY ]
                   items:
                     type: array
                     items:
@@ -201,17 +211,21 @@ paths:
                       properties:
                         name:
                           type: string
-                          example: "Plastic Bottles"
+                          enum: [ recycling_machine,
+                            Copper
+                            Silicon,
+                            Sand,
+                            Plastic,
+                            Aluminum ]
                         quantity:
                           type: integer
-                          example: 100
+                          minimum: 1
                       required:
                         - name
                         - quantity
                 required:
-                  - id
-                  - type
-                  - items
+                  - name
+                  - quantity
         responses:
           '200':
             description: Logistics event processed successfully
@@ -249,10 +263,17 @@ paths:
                   example: "delivered"
                 modelName:
                   type: string
-                  example: "EcoBin 3000"
+                  enum: [
+                    ePhone,
+                    ePhone plus,
+                    ePhone pro max,
+                    Cosmos Z25,
+                    Cosmos Z25 ultra,
+                    Cosmos Z25 FE
+                  ]
                 quantity:
                   type: integer
-                  example: 5
+                  minimum: 1
               required:
                 - status
                 - modelName
@@ -417,10 +438,21 @@ paths:
               properties:
                 machineName:
                   type: string
-                  example: "electronics_machine"
+                  enum: [
+                    electronics_machine
+                    ephone_machine
+                    ephone_plus_machine
+                    ephone_pro_max_machine
+                    cosmos_z25_machine
+                    cosmos_z25_ultra_machine
+                    cosmos_z25_fe_machine
+                    case_machine
+                    screen_machine
+                    recycling_machine
+                  ]
                 failureQuantity:
                   type: integer
-                  example: 5
+                  minimum: 1
                 simulationDate:
                   type: string
                   format: date
