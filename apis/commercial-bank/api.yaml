@@ -72,7 +72,7 @@ paths:
         '200': { description: Account created,        content: { application/json: { schema: { type: object, properties: { success: { type: boolean, example: true }, account_number: { type: string } } } } } }
         '400': { description: Invalid request,        content: { application/json: { schema: { type: object, properties: { success: { type: boolean, example: false }, error:         { type: string, example: invalidPayload } } } } } }
         '409': { description: Account already exists, content: { application/json: { schema: { type: object, properties: { success: { type: boolean, example: false }, error:         { type: string, example: accountAlreadyExists } } } } } }
-                '500': { description: Internal error,         content: { application/json: { schema: { type: object, properties: { success: { type: boolean, example: false }, error:         { type: string, example: internalError } } } } } }
+        '500': { description: Internal error,         content: { application/json: { schema: { type: object, properties: { success: { type: boolean, example: false }, error:         { type: string, example: internalError } } } } } }
 
 # [GET] /account/me :: Get your account number
   /account/me:
@@ -249,7 +249,7 @@ paths:
       responses:
         '200': { description: Loan creation result, content: { application/json: { schema: { type: object, properties: { success: { type: boolean, example: true }, loan_number: { type: string } } } } } }
         '400': { description: Invalid loan request, content: { application/json: { schema: { type: object, properties: { success: { type: boolean, example: false }, error:      { type: string, example: invalidPayload } } } } } }
-        '422': { description: Loan not permitted,   content: { application/json: { schema: { type: object, properties: { success: { type: boolean, example: false }, error:      { type: string, example: loanNotPermitted } } } } } } }
+        '422': { description: Loan not permitted,   content: { application/json: { schema: { type: object, properties: { success: { type: boolean, example: false }, error:      { type: string, example: loanNotPermitted } } } } } }
         '423': { description: Loan too large,   content: { application/json: { schema: { type: object, properties: { success: { type: boolean, example: false }, error:      { type: string, example: loanNotPermitted }, amount_remaining: { type: number, example: 123.45, description: Amount still loanable } } } } } }
         '404': { description: Account not found,    content: { application/json: { schema: { type: object, properties: { success: { type: boolean, example: false }, error: { type: string, example: accountNotFound } } } } } }
         '500': { description: Internal error,       content: { application/json: { schema: { type: object, properties: { success: { type: boolean, example: false }, error:      { type: string, example: internalError } } } } } }
