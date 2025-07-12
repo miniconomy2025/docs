@@ -74,13 +74,13 @@ paths:
         '409': { description: Account already exists, content: { application/json: { schema: { type: object, properties: { success: { type: boolean, example: false }, error:         { type: string, example: accountAlreadyExists } } } } } }
         '500': { description: Internal error,         content: { application/json: { schema: { type: object, properties: { success: { type: boolean, example: false }, error:         { type: string, example: internalError } } } } } }
 
-# [GET] /account/me :: Get your account number
+# [GET] /account/me :: Get your account info
   /account/me:
     get:
       tags: [Account]
-      summary: Get your account number
+      summary: Get your account info
       responses:
-        '200': { description: Account number,    content: { application/json: { schema: { type: object, properties: { success: { type: boolean, example: true }, account_number: { type: string } } } } } }
+        '200': { description: Account number,    content: { application/json: { schema: { type: object, properties: { success: { type: boolean, example: true }, account_number: { type: string }, net_balance: { type: number }, notification_url: { type: string } } } } } }
         '404': { description: Account not found, content: { application/json: { schema: { type: object, properties: { success: { type: boolean, example: false }, error:         { type: string, example: accountNotFound } } } } } }
         '500': { description: Internal error,    content: { application/json: { schema: { type: object, properties: { success: { type: boolean, example: false }, error:         { type: string, example: internalError } } } } } }
 
