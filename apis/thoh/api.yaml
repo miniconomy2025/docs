@@ -22,7 +22,7 @@ paths:
               schema:
                 type: object
                 properties:
-                  unixEpochStartTime:
+                  epochStartTime:
                     type: number
                     example: 1710864000000
         '400':
