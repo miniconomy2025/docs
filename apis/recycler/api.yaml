@@ -8,7 +8,7 @@ info:
 
 paths:
   
-  /Materials:
+  /materials:
       get:
         summary: Get list of available materials
         operationId: getMaterials
@@ -125,7 +125,7 @@ paths:
                     type: string
                     format: date-time
   
-  /api/BankNotification:
+  /bank-notification:
       post:
         summary: To receive a bank transaction notification
         operationId: postBankNotification
@@ -233,7 +233,7 @@ paths:
                       type: string
                       example: 'System.NullReferenceException: Object reference not set to an instance of an object.'
 
-  /api/Logistics/consumer-deliveries:
+  /logistics/consumer-deliveries:
     post:
       summary: Submit consumer delivery logistics
       operationId: postConsumerDeliveries
@@ -280,7 +280,7 @@ paths:
                     type: string
                     example: 'System.Exception: Unexpected null reference.'
 
-  /recycler/notifyme:
+  /recycler/notify-me:
     post:
       summary: To get notified from The Hand about available phones
       operationId: notifyAvailablePhones
@@ -341,7 +341,7 @@ paths:
                     type: string
                     example: 'System.Exception: Something went wrong during processing.'
 
-  /Simulation:
+  /simulation:
     post:
       summary: Start simulation
       operationId: startSimulation
@@ -467,6 +467,8 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/OrderItem'
+        total:
+          type: number
         accountNumber:
           type: string
 
