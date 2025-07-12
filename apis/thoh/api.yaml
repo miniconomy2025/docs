@@ -28,7 +28,7 @@ tags:
 paths:
   /unix-epoch-start-time:
     get:
-      summary: Get current simulation epcoh start
+      summary: Get simulation starting epoch time
       tags: [Simulation]
       responses:
         '200':
@@ -36,8 +36,11 @@ paths:
           content:
             application/json:
               schema:
-                type: string
-                example: '123455667889'
+                type: object
+                properties:
+                  epochStartTime:
+                    type: string
+                    example: '123455667889'
         '400':
           description: Simulation not running
         '500':
@@ -210,9 +213,12 @@ paths:
             schema:
               type: object
               properties:
-                orderId:
-                  type: integer
-                  description: ID of the order to pay for
+                description:
+                  type: string
+                  description: Order description or ID (string, required)
+                companyName:
+                  type: string
+                  description: Company name (optional)
       responses:
         '200':
           description: Order paid and fulfilled successfully
