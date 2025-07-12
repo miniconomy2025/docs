@@ -67,7 +67,7 @@ paths:
     post:
       tags: [Account]
       summary: Create a new account
-      requestBody: { content: { application/json: { schema: { type: object, properties: { callbackURL: { type: string, description: Optional callback URL for notifications } } } } } }
+      requestBody: { content: { application/json: { schema: { type: object, properties: { notification_url: { type: string, description: Optional notification URL for notifications } } } } } }
       responses:
         '200': { description: Account created,        content: { application/json: { schema: { type: object, properties: { success: { type: boolean, example: true }, account_number: { type: string } } } } } }
         '400': { description: Invalid request,        content: { application/json: { schema: { type: object, properties: { success: { type: boolean, example: false }, error:         { type: string, example: invalidPayload } } } } } }
