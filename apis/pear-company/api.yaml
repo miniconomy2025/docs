@@ -13,18 +13,22 @@ components:
     Order:
       type: object
       required:
+        - account_number
         - items
       properties:
+        account_number:
+          type: string
         items:
           type: array
           items:
             type: object
             required: 
-              - phone_id
+              - model
               - quantity
             properties:
-              phone_id: 
-                type: number
+              model: 
+                type: string
+                enum: [ePhone, ePhone plus, ePhone pro max]
               quantity: 
                 type: number
 
@@ -36,12 +40,12 @@ components:
           items:
             type: object
             required: 
-              - phone_id
+              - phoneId
               - name
               - quantity
               - price
             properties:
-              phone_id: 
+              phoneId: 
                 type: number
               name:
                 type: string
@@ -51,23 +55,155 @@ components:
                 type: number
                 format: float
 
+    MachineFailure:
+      type: object
+      required:
+        - machineName
+        - failureQuantity
+        - simulationDate
+        - simulationTime
+      properties:
+        machineName:
+          type: string
+          description: Name of the phone model whose machines failed (matches phones.name)
+        failureQuantity:
+          type: integer
+          minimum: 0
+          description: Number of machines to retire
+        simulationDate:
+          type: string
+          format: date
+          description: Date of the failure event (YYYY-MM-DD)
+        simulationTime:
+          type: string
+          pattern: '14:30:45'
+          description: Time of the failure event (HH:MM:SS)
+    
+    OrderResponse:
+      type: object
+      required:
+        - orderId
+        - price
+      properties:
+        order_id:
+          type: number
+          description: Reference number to use for payment
+        price:
+          type: number
+          format: float
+          description: Total price of the order
+        accountNumber:
+          type: string
+          example: "123456789012"
+          description: Bank account number for phones
+
+    DeliveryConfirmation:
+      type: object
+      required:
+        - delivery_reference
+      properties:
+        delivery_reference:
+          type: number
+          description: Delivery reference number
+    
+    PickupRequest:
+      type: object
+      required:
+       - type
+       - id
+       - quantity
+      properties:
+        type:
+          type: string
+          enum: [PICKUP]
+          description: Type of logistics request
+        id:
+          type: string
+          description: Delivery reference for consumer logistics
+        quantity:
+          type: number
+          description: Quantity being picked up
+    
+    DeliveryRequest:
+      type: object
+      required:
+        - type
+        - id
+        - items
+      properties:
+        type:
+          type: string
+          enum: [DELIVERY]
+          description: Type of logistics request
+        id:
+          type: number
+          description: Delivery reference for bulk logistics
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              itemName:
+                type: string
+              quantity:
+                type: number
+              measurementType:
+                type: string
+                enum: [KG, UNIT]
+                description: "UNIT/KG"
+          description: Array of items being delivered
 
 
 paths:
-  /simulation/start:
+  /simulation:
     post:
       summary: Start a new simulation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - epochStartTime
+              properties:
+                epochStartTime:
+                  type: string
+                  description: Unix epoch time of simulation start
       responses:
         '200':
           description: Simulation started
-
-  /simulation/tick:
+    
+    delete:
+      summary: Stops the simulation
+      description: Stops the simulation for our server
+      responses:
+        200:
+          description: Successfully stopped simulation 
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Successfully stopped simulation"
+          
+  /machines/failure:
     post:
-      summary: Progress simulation by one tick
+      summary: Break a machine random event
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MachineFailure'
       responses:
         '200':
-          description: Simulation tick processed
-          
+          description: Machine failure is recorded
+        '400':
+          description: Invalid request body
+
   /stock:
     get:
       summary: Get current phone stock
@@ -79,7 +215,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Stock'
                       
-  /order:
+  /orders:
     post:
       summary: Make an order for phones
       requestBody:
@@ -89,56 +225,36 @@ paths:
             schema:
               $ref: '#/components/schemas/Order'
       responses:
-        '201':
-          description: Order placed successfully. Items reserved for 24 hours awaiting payment.
+        '200':
+          description: Order placed successfully.
           content:
             application/json:
               schema:
-                type: object
-                required:
-                  - order_id
-                  - price
-                properties:
-                  order_id:
-                    type: number
-                    description: Reference number to use for payment
-                  price:
-                    type: number
-                    format: float
-                    description: Total price of the order
+                $ref: '#/components/schemas/Order'
         '400':
           description: Invalid order data
 
-  /payment-made:
+  /logistics:
     post:
-      summary: Notify that payment has been made to Pear phones
+      summary: Confirm delivery or pickup
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              type: object
-              required:
-                - reference
-                - amount
-              properties:
-                reference:
-                  type: number
-                  description: Order id
-                amount:
-                  type: number
-                  format: float
-                  description: Payment amount
+              oneOf:
+                - $ref: '#/components/schemas/PickupRequest'
+                - $ref: '#/components/schemas/DeliveryRequest'
+                
       responses:
         '200':
-          description: Payment accepted
+          description: Delivery request accepted
         '400':
-          description: Invalid payment data
-
-
-  /goods-delivered:
+          description: Invalid delivery data
+          
+  /logistics/notification:
     post:
-      summary: Confirm delivery of bulk goods to Pear phones
+      summary: Notify an order has been delivered
       requestBody:
         required: true
         content:
@@ -148,32 +264,10 @@ paths:
               required:
                 - delivery_reference
               properties:
-                delivery_reference:
-                  type: number
-                  description: Delivery reference number
+                delivery_reference: 
+                  type: string
       responses:
         '200':
-          description: Bulk delivery recorded
+          description: Accepted
         '400':
-          description: Invalid delivery data
-
-  /goods-collection:
-    post:
-      summary: Confirm consumer goods have been collected from Pear phones
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - delivery_reference
-              properties:
-                delivery_reference:
-                  type: number
-                  description: Delivery reference number
-      responses:
-        '200':
-          description: Consumer delivery recorded
-        '400':
-          description: Invalid delivery data
+          description: Invalid delivery reference
