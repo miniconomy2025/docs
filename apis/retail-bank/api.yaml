@@ -21,7 +21,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CreateAccountResponse'
+                $ref: '#/components/schemas/CreateTransactionalAccountResponse'
     get:
       tags:
         - AccountEndpoints
@@ -151,7 +151,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CreateAccountResponse'
+                $ref: '#/components/schemas/CreateLoanAccountResponse'
   /report:
     get:
       tags:
@@ -264,23 +264,40 @@ paths:
 components:
   schemas:
     AccountDto:
+      required:
+        - accountType
+        - balancePending
+        - balancePosted
+        - closed
+        - createdAt
+        - creditsPending
+        - creditsPosted
+        - debitsPending
+        - debitsPosted
+        - id
       type: object
       properties:
         id:
+          maxLength: 13
+          minLength: 4
+          pattern: '^([0-9]{4})|([0-9]{12,13})$'
           type: string
-          nullable: true
         accountType:
           $ref: '#/components/schemas/LedgerAccountType'
         debitsPending:
+          minimum: 0
           type: integer
           format: int128
         debitsPosted:
+          minimum: 0
           type: integer
           format: int128
         creditsPending:
+          minimum: 0
           type: integer
           format: int128
         creditsPosted:
+          minimum: 0
           type: integer
           format: int128
         balancePending:
@@ -292,55 +309,95 @@ components:
         closed:
           type: boolean
         createdAt:
+          minimum: 0
           type: integer
           format: int64
       additionalProperties: false
-    CreateAccountResponse:
-      type: object
-      properties:
-        accountId:
-          type: string
-          nullable: true
-      additionalProperties: false
     CreateLoanAccountRequest:
+      required:
+        - debtorAccountId
+        - loanAmountCents
       type: object
       properties:
         loanAmountCents:
+          minimum: 1
           type: integer
           format: int64
         debtorAccountId:
+          maxLength: 12
+          minLength: 12
+          pattern: '^[0-9]+$'
           type: string
-          nullable: true
+      additionalProperties: false
+    CreateLoanAccountResponse:
+      required:
+        - accountId
+      type: object
+      properties:
+        accountId:
+          maxLength: 13
+          minLength: 13
+          pattern: '^[0-9]+$'
+          type: string
       additionalProperties: false
     CreateTransactionAccountRequest:
+      required:
+        - salaryCents
       type: object
       properties:
         salaryCents:
+          minimum: 0
           type: integer
           format: int64
       additionalProperties: false
+    CreateTransactionalAccountResponse:
+      required:
+        - accountId
+      type: object
+      properties:
+        accountId:
+          maxLength: 12
+          minLength: 12
+          pattern: '^[0-9]+$'
+          type: string
+      additionalProperties: false
     CreateTransferRequest:
+      required:
+        - amountCents
+        - from
+        - reference
+        - to
       type: object
       properties:
         from:
+          maxLength: 12
+          minLength: 12
+          pattern: '^[0-9]+$'
           type: string
-          nullable: true
         to:
+          maxLength: 13
+          minLength: 12
+          pattern: '^[0-9]+$'
           type: string
-          nullable: true
         amountCents:
+          minimum: 1
           type: integer
           format: int128
         reference:
+          minimum: 1
           type: integer
           format: int64
       additionalProperties: false
     CreateTransferResponse:
+      required:
+        - transferId
       type: object
       properties:
         transferId:
+          maxLength: 32
+          minLength: 32
+          pattern: '^[0-9A-F]+$'
           type: string
-          nullable: true
       additionalProperties: false
     LedgerAccountType:
       enum:
@@ -369,50 +426,76 @@ components:
           nullable: true
       additionalProperties: {}
     StartSimulationRequest:
+      required:
+        - epochStartTime
       type: object
       properties:
         epochStartTime:
+          minimum: 0
           type: integer
           format: int64
       additionalProperties: false
     TransferDto:
+      required:
+        - amount
+        - creditAccountId
+        - debitAccountId
+        - reference
+        - timestamp
+        - transferId
+        - transferType
       type: object
       properties:
         transferId:
+          maxLength: 32
+          minLength: 32
+          pattern: '^[0-9A-F]+$'
           type: string
-          nullable: true
         transferType:
           $ref: '#/components/schemas/TransferType'
         debitAccountId:
+          maxLength: 13
+          minLength: 4
+          pattern: '^([0-9]{4})|([0-9]{12,13})$'
           type: string
-          nullable: true
         creditAccountId:
+          maxLength: 13
+          minLength: 4
+          pattern: '^([0-9]{4})|([0-9]{12,13})$'
           type: string
-          nullable: true
         amount:
+          minimum: 0
           type: integer
           format: int128
         parentId:
+          maxLength: 32
+          minLength: 32
+          pattern: '^[0-9A-F]+$'
           type: string
           nullable: true
         timestamp:
+          minimum: 0
           type: integer
           format: int64
         reference:
+          minimum: 1
           type: integer
           format: int64
       additionalProperties: false
     TransferDtoCursorPagination:
+      required:
+        - items
+        - next
       type: object
       properties:
         items:
           type: array
           items:
             $ref: '#/components/schemas/TransferDto'
-          nullable: true
         next:
+          minLength: 1
           type: string
-          nullable: true
+          format: uri
       additionalProperties: false
     TransferSide:
       enum:
