@@ -38,7 +38,7 @@ paths:
             type: integer
             format: int32
             default: 25
-        - name: timestampMax
+        - name: cursorMax
           in: query
           schema:
             type: integer
@@ -94,12 +94,17 @@ paths:
             type: integer
             format: int32
             default: 25
-        - name: timestampMax
+        - name: cursorMax
           in: query
           schema:
             type: integer
             format: int64
             default: 0
+        - name: reference
+          in: query
+          schema:
+            type: integer
+            format: int64
         - name: side
           in: query
           schema:
@@ -156,9 +161,14 @@ paths:
     get:
       tags:
         - ReportingEndpoints
+      summary: Generate Report
       responses:
         '200':
           description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Report'
   /simulation:
     post:
       tags:
@@ -223,12 +233,17 @@ paths:
             type: integer
             format: int32
             default: 25
-        - name: timestampMax
+        - name: cursorMax
           in: query
           schema:
             type: integer
             format: int64
             default: 0
+        - name: reference
+          in: query
+          schema:
+            type: integer
+            format: int64
       responses:
         '200':
           description: OK
@@ -266,15 +281,10 @@ components:
     AccountDto:
       required:
         - accountType
-        - balancePending
-        - balancePosted
         - closed
-        - createdAt
-        - creditsPending
-        - creditsPosted
-        - debitsPending
-        - debitsPosted
         - id
+        - pending
+        - posted
       type: object
       properties:
         id:
@@ -284,34 +294,30 @@ components:
           type: string
         accountType:
           $ref: '#/components/schemas/LedgerAccountType'
-        debitsPending:
-          minimum: 0
-          type: integer
-          format: int128
-        debitsPosted:
-          minimum: 0
-          type: integer
-          format: int128
-        creditsPending:
-          minimum: 0
-          type: integer
-          format: int128
-        creditsPosted:
-          minimum: 0
-          type: integer
-          format: int128
-        balancePending:
-          type: integer
-          format: int128
-        balancePosted:
-          type: integer
-          format: int128
+        pending:
+          $ref: '#/components/schemas/BalanceDto'
+        posted:
+          $ref: '#/components/schemas/BalanceDto'
         closed:
           type: boolean
-        createdAt:
+      additionalProperties: false
+    BalanceDto:
+      required:
+        - balance
+        - credits
+      type: object
+      properties:
+        debits:
           minimum: 0
           type: integer
-          format: int64
+          format: int128
+        credits:
+          minimum: 0
+          type: integer
+          format: int128
+        balance:
+          type: integer
+          format: int128
       additionalProperties: false
     CreateLoanAccountRequest:
       required:
@@ -425,6 +431,36 @@ components:
           type: string
           nullable: true
       additionalProperties: {}
+    Report:
+      required:
+        - bankBalance
+        - loanAccounts
+        - timestamp
+        - totalMoney
+        - transactionalAccounts
+      type: object
+      properties:
+        transactionalAccounts:
+          maximum: 4294967295
+          minimum: 0
+          type: integer
+          format: int32
+        loanAccounts:
+          maximum: 4294967295
+          minimum: 0
+          type: integer
+          format: int32
+        bankBalance:
+          type: integer
+          format: int128
+        totalMoney:
+          type: integer
+          format: int128
+        timestamp:
+          minLength: 1
+          pattern: '^\d+\/\d+\/\d+\ \d+:\d+:\d+$'
+          type: string
+      additionalProperties: false
     StartSimulationRequest:
       required:
         - epochStartTime
@@ -441,7 +477,6 @@ components:
         - creditAccountId
         - debitAccountId
         - reference
-        - timestamp
         - transferId
         - transferType
       type: object
@@ -473,10 +508,6 @@ components:
           pattern: '^[0-9A-F]+$'
           type: string
           nullable: true
-        timestamp:
-          minimum: 0
-          type: integer
-          format: int64
         reference:
           minimum: 1
           type: integer
