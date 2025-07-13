@@ -467,7 +467,7 @@ components:
       type: object
       properties:
         epochStartTime:
-          minimum: 0
+          minimum: 1
           type: integer
           format: int64
       additionalProperties: false
