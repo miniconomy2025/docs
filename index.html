@@ -22,6 +22,62 @@
     }
     button:hover { background-color: rgb(78, 129, 48); }
     #markdown-doc { padding: 1rem; max-width: 900px; margin: auto; }
+
+    #markdown-doc h1, #markdown-doc h2, #markdown-doc h3 {
+      color: #2a7ae2;
+      border-bottom: 1px solid #e2e2e2;
+      margin-top: 2em;
+      margin-bottom: 0.5em;
+      padding-bottom: 0.2em;
+    }
+    #markdown-doc h1 { color: #1a4b8b; font-size: 2em; }
+    #markdown-doc h2 { font-size: 1.5em; }
+    #markdown-doc h3 { font-size: 1.2em; }
+    #markdown-doc p { color: #333; line-height: 1.6; }
+    #markdown-doc ul, #markdown-doc ol { margin-left: 2em; }
+    #markdown-doc li { margin-bottom: 0.5em; }
+    #markdown-doc code, #markdown-doc pre {
+      background: #f6f8fa;
+      color: #d6336c;
+      border-radius: 4px;
+      padding: 0.2em 0.4em;
+      font-family: 'Fira Mono', 'Consolas', monospace;
+    }
+    #markdown-doc pre {
+      background: #23272e;
+      color: #e9e9e9;
+      padding: 1em;
+      overflow-x: auto;
+    }
+    #markdown-doc blockquote {
+      border-left: 4px solid #62a03f;
+      background: #f4fff4;
+      color: #3a3a3a;
+      margin: 1em 0;
+      padding: 0.5em 1em;
+    }
+    #markdown-doc table {
+      border-collapse: collapse;
+      width: 100%;
+      margin: 1em 0;
+    }
+    #markdown-doc th, #markdown-doc td {
+      border: 1px solid #e2e2e2;
+      padding: 0.5em 1em;
+    }
+    #markdown-doc th {
+      background: #eaf6ff;
+      color: #2a7ae2;
+    }
+    #markdown-doc a {
+      color: #62a03f;
+      text-decoration: underline;
+    }
+    #markdown-doc img {
+      max-width: 100%;
+      border-radius: 6px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
   </style>
 </head>
 <body>
@@ -33,7 +89,10 @@
   </header>
 
   <!----- Markdown container ----->
-  <div id="markdown-doc"></div>
+  <details id="markdown-details" style="max-width:900px" >
+    <summary style="font-size:1.1em; font-weight:bold; padding:1rem;">Markdown Docs</summary>
+    <div id="markdown-doc"></div>
+  </details>
 
   <!----- Swagger UI container ----->
   <div id="swagger-ui"></div>
@@ -57,7 +116,7 @@
 
     function loadSwaggerUI(specUrl, selectedProject) {
       swaggerContainer.innerHTML = ""; // Clear Swagger UI
-      markdownContainer.innerHTML = ""; // Clear Markdown
+      document.getElementById("markdown-doc").innerHTML = ""; // Clear Markdown
 
       SwaggerUIBundle({
         url: specUrl,
@@ -84,7 +143,7 @@
         })
         .then(markdown => {
           const html = marked.parse(markdown);
-          markdownContainer.innerHTML = html;
+          document.getElementById("markdown-doc").innerHTML = html;
         })
         .catch(() => { /* ignore if no .md */ });
     }
