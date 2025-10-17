@@ -5,7 +5,7 @@ info:
   description: API for getting stock, prices, and making orders for our Electronics.
 
 servers:
-  - url: https://electronics-supplier-api.projects.bbdgrad.com
+  - url: https://electronics-supplier.tevlen.co.za
 
 tags:
   - name: Electronics
