@@ -105,7 +105,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-  /api/truck/failure:
+  /api/trucks/failure:
     post:
       tags:
         - Hand (🤚) Events
@@ -126,7 +126,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-  /api/truck/delivery:
+  /api/trucks/delivery:
     post:
       tags:
         - Hand (🤚) Events
