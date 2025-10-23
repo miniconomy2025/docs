@@ -416,7 +416,7 @@ components:
           type: number
         paymentReferenceId:
           type: string
-        bulkLogisticsBankAccountNumber:
+        accountNumber:
           type: string
           description: Can be a string or number.
         status:
